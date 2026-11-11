@@ -1,6 +1,7 @@
-import type { InferInsertModel, InferSelectModel } from "drizzle-orm";
+import { type InferInsertModel, type InferSelectModel, sql } from "drizzle-orm";
 import {
   bigint,
+  check,
   index,
   pgTable,
   text,
@@ -45,6 +46,15 @@ export const paymentTransactions = pgTable(
     index("idx_payment_transactions_status").on(table.status),
     index("idx_payment_transactions_gateway").on(table.gateway),
     index("idx_payment_transactions_company").on(table.companyId),
+    check("payment_transactions_amount_positive", sql`${table.amount} > 0`),
+    check(
+      "payment_transactions_gateway_check",
+      sql`${table.gateway} IN ('duitnow_qr', 'fpx', 'stripe', 'manual')`,
+    ),
+    check(
+      "payment_transactions_status_check",
+      sql`${table.status} IN ('pending', 'processing', 'succeeded', 'paid', 'failed', 'expired', 'refunded')`,
+    ),
   ],
 );
 

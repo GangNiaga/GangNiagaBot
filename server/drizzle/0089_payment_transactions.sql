@@ -39,19 +39,19 @@ END $$;
 --> statement-breakpoint
 CREATE UNIQUE INDEX IF NOT EXISTS "payment_events_gateway_event_id_key" ON "payment_events" USING btree ("gateway","gateway_event_id");--> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "payment_transactions" ADD CONSTRAINT "payment_transactions_amount_positive" CHECK (amount > 0);
+ ALTER TABLE "payment_transactions" ADD CONSTRAINT "payment_transactions_amount_positive" CHECK ("payment_transactions"."amount" > 0);
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "payment_transactions" ADD CONSTRAINT "payment_transactions_gateway_check" CHECK (gateway IN ('duitnow_qr', 'fpx', 'stripe', 'manual'));
+ ALTER TABLE "payment_transactions" ADD CONSTRAINT "payment_transactions_gateway_check" CHECK ("payment_transactions"."gateway" IN ('duitnow_qr', 'fpx', 'stripe', 'manual'));
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;
 --> statement-breakpoint
 DO $$ BEGIN
- ALTER TABLE "payment_transactions" ADD CONSTRAINT "payment_transactions_status_check" CHECK (status IN ('pending', 'processing', 'succeeded', 'paid', 'failed', 'expired', 'refunded'));
+ ALTER TABLE "payment_transactions" ADD CONSTRAINT "payment_transactions_status_check" CHECK ("payment_transactions"."status" IN ('pending', 'processing', 'succeeded', 'paid', 'failed', 'expired', 'refunded'));
 EXCEPTION
  WHEN duplicate_object THEN null;
 END $$;

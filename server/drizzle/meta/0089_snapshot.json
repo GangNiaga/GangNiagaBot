@@ -6259,7 +6259,20 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "checkConstraints": {},
+      "checkConstraints": {
+        "payment_transactions_amount_positive": {
+          "name": "payment_transactions_amount_positive",
+          "value": "\"payment_transactions\".\"amount\" > 0"
+        },
+        "payment_transactions_gateway_check": {
+          "name": "payment_transactions_gateway_check",
+          "value": "\"payment_transactions\".\"gateway\" IN ('duitnow_qr', 'fpx', 'stripe', 'manual')"
+        },
+        "payment_transactions_status_check": {
+          "name": "payment_transactions_status_check",
+          "value": "\"payment_transactions\".\"status\" IN ('pending', 'processing', 'succeeded', 'paid', 'failed', 'expired', 'refunded')"
+        }
+      },
       "isRLSEnabled": false
     },
     "public.pending_authorizations": {
