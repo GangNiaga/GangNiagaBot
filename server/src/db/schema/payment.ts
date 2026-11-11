@@ -39,7 +39,9 @@ export const paymentTransactions = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
   },
   (table) => [
-    uniqueIndex("payment_transactions_gateway_txn_id_key").on(table.gatewayTxnId),
+    uniqueIndex("payment_transactions_gateway_txn_id_key").on(
+      table.gatewayTxnId,
+    ),
     index("idx_payment_transactions_status").on(table.status),
     index("idx_payment_transactions_gateway").on(table.gateway),
     index("idx_payment_transactions_company").on(table.companyId),
@@ -47,4 +49,6 @@ export const paymentTransactions = pgTable(
 );
 
 export type PaymentTransaction = InferSelectModel<typeof paymentTransactions>;
-export type NewPaymentTransaction = InferInsertModel<typeof paymentTransactions>;
+export type NewPaymentTransaction = InferInsertModel<
+  typeof paymentTransactions
+>;

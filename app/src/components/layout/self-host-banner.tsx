@@ -7,7 +7,6 @@ import {
   useUserPreferences,
 } from "@/lib/settings/message-list";
 import { BUSINESS_URL } from "@/lib/openbot-for-business";
-import { cn } from "@/lib/utils";
 
 /**
  * A slim bar offering help self-hosting OpenBot, until this person closes it.
@@ -17,5 +16,41 @@ import { cn } from "@/lib/utils";
  * preferences have to say they have not closed it.
  */
 export function SelfHostBanner() {
-  return null;
+  const { data: capabilities } = useQuery(deploymentCapabilitiesQueryOptions());
+  const { userId, data: preferences } = useUserPreferences();
+  const queryClient = useQueryClient();
+  const dismissMutation = useMutation(
+    dismissSelfHostBannerMutationOptions(queryClient, userId),
+  );
+
+  if (!capabilities?.selfHostBanner || preferences?.selfHostBannerDismissed) {
+    return null;
+  }
+
+  return (
+    <aside
+      aria-label="Self-host OpenBot"
+      className="relative flex items-center justify-between border-b bg-muted/50 px-4 py-2 text-sm"
+    >
+      <span>Self-host OpenBot for your organization.</span>
+      <div className="flex items-center gap-2">
+        <a
+          href={BUSINESS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ variant: "link", size: "sm" })}
+        >
+          Book a call
+        </a>
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label="Dismiss"
+          onClick={() => dismissMutation.mutate()}
+        >
+          <IconX className="h-4 w-4" />
+        </Button>
+      </div>
+    </aside>
+  );
 }
