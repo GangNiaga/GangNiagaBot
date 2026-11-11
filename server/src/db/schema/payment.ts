@@ -52,3 +52,34 @@ export type PaymentTransaction = InferSelectModel<typeof paymentTransactions>;
 export type NewPaymentTransaction = InferInsertModel<
   typeof paymentTransactions
 >;
+
+/**
+ * Payment webhook & gateway events audit trail.
+ *
+ * Captures raw inbound webhook payloads from Stripe and DuitNow QR providers
+ * linked to a payment transaction.
+ */
+export const paymentEvents = pgTable(
+  "payment_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    transactionId: uuid("transaction_id").references(
+      () => paymentTransactions.id,
+      { onDelete: "cascade" },
+    ),
+    gateway: text("gateway").notNull(),
+    gatewayEventId: text("gateway_event_id"),
+    eventType: text("event_type").notNull(),
+    payload: jsonb("payload").default({}),
+    receivedAt: timestamp("received_at", { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("payment_events_gateway_event_id_key").on(
+      table.gateway,
+      table.gatewayEventId,
+    ),
+  ],
+);
+
+export type PaymentEvent = InferSelectModel<typeof paymentEvents>;
+export type NewPaymentEvent = InferInsertModel<typeof paymentEvents>;
