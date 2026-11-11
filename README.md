@@ -1,624 +1,334 @@
-<div align="center">
+# GangNiagaBot (`gangniaga.my`)
 
-<img src="app/src/assets/openbot-logo.png" alt="" width="72">
+[![CI](https://github.com/GangNiaga/GangNiagaBot/actions/workflows/ci.yml/badge.svg)](https://github.com/GangNiaga/GangNiagaBot/actions/workflows/ci.yml)
+[![Security Scan](https://github.com/GangNiaga/GangNiagaBot/actions/workflows/security_zizmor.yml/badge.svg)](https://github.com/GangNiaga/GangNiagaBot/actions/workflows/security_zizmor.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Database: Supabase PG17](https://img.shields.io/badge/Database-PostgreSQL%2017%20(Supabase)-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![Runtime: Bun](https://img.shields.io/badge/Runtime-Bun%201.4+-FBF0DF?logo=bun&logoColor=black)](https://bun.sh)
 
-# OpenBot
-
-### AI coworkers. Ready for the enterprise.
-
-A modular, self-hostable workspace for AI coworkers.<br>
-Choose your models. Bring your agents. Own your infrastructure.
-
-[open.bot](https://open.bot) · [Docs](docs/README.md) · [Deploy on Kubernetes](#deploy-on-kubernetes) · [Run from source](#run-from-source)
-
-[![GitHub Trending: #3 Repository Of The Day](https://trendshift.io/api/badge/repositories/175080)](https://trendshift.io/repositories/175080)
-[![Trendshift: #3 Repository Of The Day](https://trendshift.io/api/badge/trendshift/repositories/175080/daily)](https://trendshift.io/repositories/175080)
-
-<br>
-
-[![Download for Mac (Apple silicon)](https://img.shields.io/github/v/release/CopilotKit/OpenBot?style=for-the-badge&labelColor=3A3466&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI%2BPHBhdGggZmlsbD0iI2ZmZiIgZD0iTTExIDNoMnYxMC4ybDMuNi0zLjZMMTggMTFsLTYgNi02LTYgMS40LTEuNCAzLjYgMy42ek01IDE5aDE0djJINXoiLz48L3N2Zz4%3D&label=Download%20for%20Mac%20%28Apple%20silicon%29&color=6E6AE0)](https://downloads.copilotkit.ai/latest/OpenBot-mac-arm64.dmg)
-[![Download for Mac (Intel)](https://img.shields.io/github/v/release/CopilotKit/OpenBot?style=for-the-badge&labelColor=3A3466&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI%2BPHBhdGggZmlsbD0iI2ZmZiIgZD0iTTExIDNoMnYxMC4ybDMuNi0zLjZMMTggMTFsLTYgNi02LTYgMS40LTEuNCAzLjYgMy42ek01IDE5aDE0djJINXoiLz48L3N2Zz4%3D&label=Download%20for%20Mac%20%28Intel%29&color=4A7CC8)](https://downloads.copilotkit.ai/latest/OpenBot-mac-x64.dmg)
-[![Download for Windows](https://img.shields.io/github/v/release/CopilotKit/OpenBot?style=for-the-badge&labelColor=3A3466&logo=data%3Aimage%2Fsvg%2Bxml%3Bbase64%2CPHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI%2BPHBhdGggZmlsbD0iI2ZmZiIgZD0iTTExIDNoMnYxMC4ybDMuNi0zLjZMMTggMTFsLTYgNi02LTYgMS40LTEuNCAzLjYgMy42ek01IDE5aDE0djJINXoiLz48L3N2Zz4%3D&label=Download%20for%20Windows&color=9A5CC6)](https://downloads.copilotkit.ai/latest/OpenBot-windows-x64-setup.exe)
-
-<sub>Notarized .dmg for Apple silicon and Intel Macs · signed installer for Windows x64 · no terminal or developer tools needed · [Release notes](https://github.com/CopilotKit/OpenBot/releases/latest)</sub>
-
-<br>
-
-[![OpenBot for Business: get early access](https://img.shields.io/badge/OpenBot_for_Business-Get_early_access_%E2%86%92-D14B9C?style=for-the-badge&labelColor=3A3466)](https://dashboard.operations.copilotkit.ai/early-access/openbot?platform=business&ref=github&utm_source=github&utm_medium=readme&utm_campaign=openbot-early-access)
-
-<sub>From [CopilotKit](https://www.copilotkit.ai), creators of [AG-UI](https://github.com/ag-ui-protocol/ag-ui).</sub>
-
-</div>
-
-https://github.com/user-attachments/assets/c60f07da-8b6d-46eb-a573-17fc1e65a644
-
-<p align="center"><sub>Watch a Bot use its browser and tools, answer with interactive results, and wait for your approval before it sends. Take over when it needs you, and connect the agents you already run.</sub></p>
-
-## Getting started
-
-### On your laptop
-
-The easiest way to get started is with the fully self-contained app that runs on your laptop, combining the OpenBot frontend and Docker-based backend in one application.
-
-[Mac / Apple silicon](https://downloads.copilotkit.ai/latest/OpenBot-mac-arm64.dmg) · [Mac / Intel](https://downloads.copilotkit.ai/latest/OpenBot-mac-x64.dmg) · [Windows](https://downloads.copilotkit.ai/latest/OpenBot-windows-x64-setup.exe)
-
-[Run from source](#run-from-source)
-
-### For your team
-
-**OpenBot for Business** brings your agents into one workspace with company sign-in, tool permissions, approvals, and audit. Deploy on your infrastructure or work with our engineers on hosting and customization.
-
-[**Get early access to OpenBot for Business →**](https://dashboard.operations.copilotkit.ai/early-access/openbot?platform=business&ref=github&utm_source=github&utm_medium=readme&utm_campaign=openbot-early-access) · [**Talk to an engineer**](https://open.bot/business) · [**Kubernetes setup**](#deploy-on-kubernetes)
-
-<a id="early-access-platforms"></a>
-
-### Web, mobile, and chat
-
-[Web](https://dashboard.operations.copilotkit.ai/early-access/openbot?platform=web&ref=github&utm_source=github&utm_medium=readme&utm_campaign=openbot-early-access) · [iOS](https://dashboard.operations.copilotkit.ai/early-access/openbot?platform=ios&ref=github&utm_source=github&utm_medium=readme&utm_campaign=openbot-early-access) · [Android](https://dashboard.operations.copilotkit.ai/early-access/openbot?platform=android&ref=github&utm_source=github&utm_medium=readme&utm_campaign=openbot-early-access) · [Slack](https://dashboard.operations.copilotkit.ai/early-access/openbot?platform=slack&ref=github&utm_source=github&utm_medium=readme&utm_campaign=openbot-early-access) · [Teams](https://dashboard.operations.copilotkit.ai/early-access/openbot?platform=teams&ref=github&utm_source=github&utm_medium=readme&utm_campaign=openbot-early-access)
-
-## Your workspace. Your stack.
-
-<div align="center">
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/openbot-stack-dark.svg">
-  <img src="docs/assets/openbot-stack-light.svg" alt="OpenBot's modular stack: an enterprise workspace over built-in or AG-UI agents, your models, MCP tools, configurable infrastructure, and deployment on your laptop or Kubernetes." width="90%">
-</picture>
-</div>
-
-- **Choose your models.** Use OpenAI, Claude, Gemini, or open models through an OpenAI-compatible endpoint, hosted by a provider or on your own infrastructure. Keep your provider relationships and change models as your needs change.
-- **Bring your agents.** Run built-in Bots in the OpenBot server, or connect your existing agents through AG-UI from any agent execution platform. Agents built with different stacks can work in the same workspace.
-- **Make it yours.** Use the MIT-licensed template as-is, white-label it, or customize it deeply. AG-UI connects agents, MCP connects tools, and the frontends and backend can evolve independently.
-- **Govern work across your team.** Company sign-in, roles, tool permissions, approvals, and audit apply across the workspace. Your agents use OpenBot's tools and computers under the same policies.
-- **Get help deploying it.** CopilotKit's engineers can work with your team to deploy OpenBot, connect your systems, and automate parts of specific jobs.
-
-[Connect your agent](#bring-your-own-agent) · [Configure models and tools](docs/configuration.md) · [Explore OpenBot for Business](https://open.bot/business)
-
-## Built on CopilotKit and AG-UI
-
-OpenBot is built on [CopilotKit](https://www.copilotkit.ai), which is [used in production by a majority of Fortune 500 companies](https://www.copilotkit.ai/blog/series-a).
-
-**Your agent stack.** [AG-UI](https://docs.ag-ui.com/introduction#supported-integrations) has first-class integrations across the major agent frameworks and harnesses, including Anthropic's Claude Agent SDK, Microsoft Agent Framework and Agent Harness, Google ADK, AWS Strands, Oracle Agent Spec, LangChain, Mastra, Pydantic AI, Agno, and CrewAI. Many ship first-party support; [Amazon Bedrock AgentCore supports AG-UI directly](https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/runtime-agui.html).
-
-**Your execution platform.** Keep your agents on Amazon Bedrock AgentCore, Claude Managed Agents, [Google's Agent Platform](https://docs.cloud.google.com/gemini-enterprise-agent-platform), LangChain's Managed Deep Agents, [Microsoft Foundry Agent Service](https://learn.microsoft.com/en-us/azure/foundry/agents/concepts/hosted-agents), or your own infrastructure. Connect them to OpenBot through an AG-UI endpoint, using an adapter where needed. Your choice of agent platform stays independent of your workspace.
-
-## Architecture
-
-OpenBot has three parts. On your laptop, setup runs the backend and Intelligence for you. For a team, the Helm chart deploys both on Kubernetes in your own infrastructure.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/architecture-overview-dark.svg">
-  <img src="docs/assets/architecture-overview-light.svg" alt="Mac, Windows, web, iOS, Android, Slack, and Teams connect to the OpenBot backend. Built-in Bots in the server and your agents on any execution platform share an AG-UI lane. Computer execution uses Kubernetes by default or a compatible sandbox provider; tools use MCP and adapters. CopilotKit Intelligence runs alongside OpenBot on your infrastructure." width="100%">
-</picture>
-
-| Part | What it does |
-| --- | --- |
-| **OpenBot frontends** | Mac, Windows, web, iOS, Android, Slack, and Teams connect people to the same workspace. Conversations, interactive results, computer view, and approvals adapt to each surface. [Choose a frontend](#getting-started). |
-| **OpenBot backend** | Runs the workspace API and built-in Bots, connects external agents and tools, manages Bot computers, and enforces identity, permissions, action policies, and audit. Deploys on Kubernetes with PostgreSQL and persistent storage. |
-| **CopilotKit Intelligence** | Durable conversations, memory, Automatic Learning, and enterprise governance services. Separately licensed; runs on Kubernetes alongside OpenBot. |
-
-OpenBot enforces sign-in, tool permissions, action policies, and audit at its API, alongside Intelligence's platform services. Built-in Bots run in the OpenBot server; your own agents can run alongside OpenBot or on any agent execution platform. Both use AG-UI and can share the same workspace.
-
-Computer execution is pluggable: use the default Kubernetes setup or connect a compatible external computer provider.
-
-[Architecture details](docs/architecture.md) · [Services and ports](#services-and-ports) · [Kubernetes deployment](charts/openbot/README.md)
-
-## Open source, local operation, and licensing
-
-**The OpenBot application template is open source under the [MIT license](LICENSE).** You can fork, modify, and white-label it. It uses **CopilotKit Intelligence**, which is separately licensed and can run entirely on your own machine or infrastructure.
-
-| Where you run it | CopilotKit Intelligence license |
-| --- | --- |
-| **Your laptop, for personal use and experimentation** | Requires a free local Intelligence license. Desktop setup handles this for you. |
-| **Kubernetes evaluation** | Requires a free Intelligence trial license. [Request a trial](https://dashboard.operations.copilotkit.ai/early-access/openbot?platform=business&ref=github&utm_source=github&utm_medium=readme&utm_campaign=openbot-early-access). |
-| **Kubernetes / production** | Requires a production Intelligence license beyond evaluation. OpenBot for Business includes Intelligence for use with OpenBot. [Plans and pricing](https://open.bot/pricing). |
-
-**Fully local is an option.** Run OpenBot, Intelligence, and a compatible model locally. A cloud model or connected online app still sends requests to that service. Initial downloads, account sign-in, and local license renewal need internet access.
+> **Enterprise Autonomous Business Operating System & Multi-Agent Workforce Platform**  
+> Dibina berasaskan seni bina OpenBot dan protokol terbuka AG-UI, direka khusus untuk memperkasakan operasi perniagaan Malaysia dan antarabangsa dengan automasi ejen AI berautonomi tinggi, pematuhan keselamatan data peringkat perusahaan, dan ekosistem transaksi perniagaan B2B moden.
 
 ---
 
-## Deploy on Kubernetes
+## 📑 Isi Kandungan
 
-Deploy OpenBot and CopilotKit Intelligence together on **AWS EKS, Azure AKS, Google GKE, or your own Kubernetes cluster**. The chart installs Intelligence by default; no separate hosted project is required.
+1. [Gambaran Keseluruhan](#-gambaran-keseluruhan)
+2. [Senibina Sistem](#-senibina-sistem)
+3. [Struktur Monorepo](#-struktur-monorepo)
+4. [Panduan Mula Pantas](#-panduan-mula-pantas)
+   - [Prasyarat Sistem](#1-prasyarat-sistem)
+   - [Konfigurasi Persekitaran (.env)](#2-konfigurasi-persekitaran-env)
+   - [Migrasi Pangkalan Data Drizzle](#3-migrasi-pangkalan-data-drizzle)
+   - [Menjalankan Pelayan Pembangunan & Ujian](#4-menjalankan-pelayan-pembangunan--ujian)
+5. [Modul Pembayaran & Lejar B2B](#-modul-pembayaran--lejar-b2b)
+   - [Skema & Integriti Data Supabase](#skema--integriti-data-supabase)
+   - [Pelan Langganan Enterprise gangniaga.my](#pelan-langganan-enterprise-gangniagamy)
+   - [Saluran Pembayaran Tempatan & Global](#saluran-pembayaran-tempatan--global)
+6. [Kualiti Kod & Aliran Kerja CI/CD](#-kualiti-kod--aliran-kerja-cicd)
+   - [Gerbang GitHub Actions](#gerbang-ci-github-actions)
+   - [Pengesahan Tempatan (verify-stack.ps1)](#pengesahan-tempatan-verify-stackps1)
+7. [Pelesenan & Kredit](#-pelesenan--kredit)
 
-For a first evaluation, you need a cluster with **amd64 nodes**, a **default StorageClass**, `kubectl`, Helm, a **trial or production license**, and a model key. The commands below use an OpenAI key. For Anthropic, a model router, cluster sizing, or an existing Intelligence deployment, use the [full Helm guide](charts/openbot/README.md).
+---
 
-> **Setting up with an AI assistant?** Give it this README and [the Helm guide](charts/openbot/README.md). The guide covers cloud-specific values, storage, secrets, sign-in, networking, upgrades, and troubleshooting. Use the evaluation below only through a local port-forward; configure sign-in and TLS before sharing a deployment.
+## 🌟 Gambaran Keseluruhan
 
-1. **Get the source.** Skip this if you already have a checkout.
+**GangNiagaBot** mentransformasikan cara syarikat beroperasi dengan menggabungkan keupayaan ejen AI pintar (*AI coworkers*) terus ke dalam aliran kerja digital harian. Setiap ejen dilengkapi dengan keupayaan komputer maya terasing (*sandboxed computer environment*), pelayar web sebenar berautentikasi, alatan Model Context Protocol (MCP), dan keupayaan melaksanakan tugasan kompleks daripada pengurusan dokumen sehingga transaksi kewangan.
 
-   ```sh
-   git clone https://github.com/CopilotKit/OpenBot.git
-   cd OpenBot
-   ```
+### Ciri-Ciri Utama Perusahaan:
+* **Pengasingan Komputer & Kotak Pasir Selamat**: Setiap pengguna dan ejen beroperasi dalam persekitaran kontena Docker / Podman yang terasing dengan kawalan dasar CEL (*Common Expression Language*).
+* **Interaksi Multimodal & Pemerhatian Langsung**: Pengguna boleh memantau skrin pelayar ejen secara masa nyata (*real-time screen casting*), mengambil alih kawalan input bila perlu (*human-in-the-loop takeover*), dan meluluskan tindakan kritikal secara berpusat.
+* **Lejar Pembayaran B2B Berbilang Saluran**: Pengurusan transaksi kewangan terbina dalam menggunakan Stripe Billing & Invoicing, DuitNow QR (standard EMVCo Malaysia), dan perbankan FPX dengan penguatkuasaan keselamatan peringkat baris (*Row-Level Security*).
+* **Pengurusan Akses Perusahaan (IAM)**: Integrasi Better Auth menyokong Google Workspace, Microsoft Entra ID (OIDC/OAuth2), Okta, serta SAML korporat berasaskan domain emel.
 
-2. **Create `openbot-secrets.yaml` locally.** Replace the placeholders with your license and model key. Keep this file out of source control.
+---
 
-   ```yaml
-   secrets:
-     licenseToken: "<your CopilotKit trial or production license>"
-     modelApiKey: "<your OpenAI API key>"
-   ```
+## 🏗️ Senibina Sistem
 
-3. **Install.**
+Seni bina GangNiagaBot menghubungkan lapisan antaramuka web berprestasi tinggi, pelayan mikroservis API Hono/Bun, persekitaran komputer kotak pasir Podman / Kiri v0.2.0, pangkalan data awan Supabase PostgreSQL 17, dan gerbang pembayaran global/tempatan.
 
-   ```sh
-   helm dependency build charts/openbot
-   helm install openbot charts/openbot \
-     --namespace openbot --create-namespace \
-     --values charts/openbot/ci/vanilla-values.yaml \
-     --values openbot-secrets.yaml \
-     --timeout 15m
-   ```
+```mermaid
+flowchart TB
+    subgraph ClientLayer["Lapisan Klien & Antaramuka"]
+        UI["Web UI Dashboard\n(React 19 + TanStack Router + Vite)\nPort 3010"]
+        Mobile["Mobile & Desktop Surface\n(React Native + Tauri)"]
+    end
 
-4. **Open your evaluation.**
+    subgraph BackendLayer["Pelayan API & Logik Perusahaan"]
+        Server["Pelayan Hono / Bun Server\n(server/src/index.ts)\nPort 3001"]
+        Auth["Better Auth & Dasar CEL\n(RBAC, OIDC, SAML, Audit)"]
+        Supervisor["Supervisor Daemon\n(Pengurus Kitaran Kontena)\nPort 4500"]
+    end
 
-   ```sh
-   kubectl -n openbot get pods,jobs
-   kubectl -n openbot port-forward svc/openbot-server 3001:3001
-   ```
+    subgraph SandboxLayer["Persekitaran Ejen Kotak Pasir (Sandbox)"]
+        PodmanRuntime["Podman Engine / Kiri v0.2.0 API\n(Docker-Compatible Runtime)"]
+        AgentContainer["Agent Computer Container\n(Chromium + Workspace + Xvfb)\nPort 4100"]
+        MCPTools["MCP Hub & Connectors\n(Google Drive, Notion, Filesystem)"]
+    end
 
-   Open <http://127.0.0.1:3001>. This configuration is single-user: anyone who can reach it is an administrator. Keep the port-forward local.
+    subgraph DatabaseLayer["Pangkalan Data & Memori Berterusan"]
+        SupabasePG["Supabase PostgreSQL 17\n(90 Migrasi Drizzle + pgvector)"]
+        RLSLedger["Lejar Pembayaran Selamat\n(payment_transactions & payment_events\nRow-Level Security: Active)"]
+    end
 
-The chart creates the runtime credentials, installs the databases, bootstraps Intelligence, and sets up the Learning container and scheduled jobs. Automatic Learning uses your model key too.
+    subgraph PaymentLayer["Gerbang Pembayaran & Perbankan B2B"]
+        StripeGateway["Stripe Billing & Invoicing\n(gangniaga_b2b_monthly / annual)"]
+        DuitNowQR["DuitNow QR Malaysia\n(Standard EMVCo Tempatan)"]
+        FPXGateway["FPX Online Banking\n(Perbankan Dalam Talian)"]
+    end
 
-For a team deployment, follow the [Helm guide](charts/openbot/README.md) to configure authentication, TLS, your database, secrets, persistent storage, and network policies. For a single-container alternative, see [Deploy it](#deploy-it).
+    subgraph ModelLayer["Penyedia Model AI (LLM Providers)"]
+        LLMs["OpenAI / Claude / Gemini / DeepSeek / Ollama\n(OpenAI-Compatible Endpoints)"]
+    end
 
-## Run from source
-
-Use the template to customize the workspace, branding, Bots, and skills. The source setup below uses managed Intelligence by default; [local Intelligence](#intelligence-on-your-own-machine) is also available.
-
-```sh
-git clone https://github.com/CopilotKit/OpenBot.git
-cd OpenBot
+    %% Aliran Sambungan
+    UI -->|"HTTP / WebSocket"| Server
+    Mobile -->|"REST API"| Server
+    Server --> Auth
+    Server --> Supervisor
+    Supervisor --> PodmanRuntime
+    PodmanRuntime --> AgentContainer
+    AgentContainer --> MCPTools
+    Server -->|"Drizzle ORM (Pooler)"| SupabasePG
+    SupabasePG --> RLSLedger
+    Server -->|"Stripe SDK & Webhook"| StripeGateway
+    Server -->|"Invois & Kod QR"| DuitNowQR
+    Server -->|"Penyelesaian Transaksi"| FPXGateway
+    Server -->|"AG-UI Protocol"| LLMs
 ```
 
-### Requirements
+---
 
-To run the open-source template locally, you’ll need the following.
+## 📂 Struktur Monorepo
 
-- Docker, for PostgreSQL and the shipped Bots.
-- [Bun](https://bun.sh) 1.4+, for the app, the API server and the tests (some tests fail on 1.3).
-- A CopilotKit Intelligence project and license. A free plan is available, and Intelligence can be self-hosted.
-- A model key. The proof-of-concept Bot uses OpenAI; the LangGraph Bot can use OpenAI, Anthropic, or Google.
+Repositori ini distrukturkan sebagai monorepo modular berasaskan ruang kerja (*Bun Workspaces*):
 
-### Quick start
+| Direktori / Pakej | Fungsi & Kandungan Utama |
+| :--- | :--- |
+| **`app/`** | Aplikasi frontend berasaskan **React 19**, **Vite**, **TanStack Router**, **Tailwind CSS**, dan komponen UI Radix. Menyediakan antaramuka sembang, pemantauan komputer masa nyata, katalog ejen, dan panel pentadbir. |
+| **`server/`** | Pelayan backend teras berasaskan **Bun** dan kerangka kerja **Hono**. Mengendalikan laluan API REST, autentikasi Better Auth, ejen CopilotKit runtime, dasar tindakan CEL, pengauditan, dan lejar transaksi. |
+| **`server/drizzle/`** | Koleksi **90 fail migrasi SQL** rasmi (`0000_...` hingga `0089_payment_transactions.sql`) berserta metadata schema Drizzle (`meta/_journal.json`) untuk sinkronisasi pangkalan data PostgreSQL. |
+| **`packages/` & Modul Teras** | Pakej sokongan dalam monorepo:<ul><li>`shared/`: Definisi jenis data TypeScript kongsi, skema pengesahan Zod, dan utiliti rentas platform.</li><li>`toolkit/`: Pustaka teras ejen AG-UI bebas-kerangka kerja dan adapter CopilotKit.</li><li>`worker/`: Proses pekerja latar belakang untuk rutin berjadual (*scheduled routines worker*).</li><li>`agent-computer/`: Perkhidmatan kotak pasir automasi pelayar Chromium dan manipulasi fail.</li><li>`supervisor/`: Daemon pengurus kontena kotak pasir yang berkomunikasi dengan soket enjin kontena.</li><li>`extension/`: Sambungan pelayar untuk integrasi aliran kerja web terus ke GangNiagaBot.</li></ul> |
+| **`examples/`** | Templat ejen bersedia guna dan spesifikasi perniagaan (contohnya katalog perbankan/fintech YAML di `examples/fintech/`). |
+| **`.github/workflows/`** | Konfigurasi saluran CI/CD GitHub Actions merangkumi `ci.yml` (gerbang pengujian menyeluruh), `security_zizmor.yml`, `release.yml`, dan binaan desktop lintas-platform. |
 
-The example configuration sets `OPENBOT_SINGLE_USER=true`, so you can try the app as a local administrator. Configure [sign-in](#sign-in) before giving anyone else access. On a Mac, the free Developer plan also covers [running Intelligence locally](#intelligence-on-your-own-machine) with Docker.
+---
 
-> **Setting up with an AI assistant?** Paste [`prompt.txt`](prompt.txt) into it first. It carries the
-> same steps as below plus the things that are easy to get wrong: which of the blank keys in
-> `.env.example` are actually yours to fill (the CopilotKit key and a model key), which the start
-> script fills for you, and what each start-up refusal means. Every claim in it is checked against
-> this repository.
+## ⚡ Panduan Mula Pantas
 
-1. Create `.env`:
+### 1. Prasyarat Sistem
 
-   ```sh
-   cp .env.example .env
-   bun install
-   ```
+Sebelum memulakan pemasangan, pastikan komponen berikut tersedia pada persekitaran hos anda:
+* **Bun**: Versi `1.4.0` atau ke atas (`bun -v` disyorkan `1.4.3+`).
+* **Node.js**: Versi `22+` (diperlukan untuk perkakasan mudah alih/alat binaan tertentu).
+* **Enjin Kontena**: **Podman** (tersedia pada port lalai) atau persekitaran runtime kontena **Kiri v0.2.0** (`libracoder/kiri` serasi API Docker Engine).
+* **Pangkalan Data**: **PostgreSQL 17** (disyorkan pangkalan data berprestasi tinggi dari Supabase).
 
-2. Connect a fresh managed Intelligence project:
+---
 
-   ```sh
-   npx --yes copilotkit@latest login
-   npx --yes copilotkit@latest project select
-   bun scripts/setup-learning.ts
-   ```
+### 2. Konfigurasi Persekitaran (.env)
 
-   The helper provisions the selected project's runtime key, creates or reuses its
-   `openbot` Learning container, then writes both settings to `.env`. It preserves
-   custom container assignments and never replaces an existing OpenBot key; with one
-   set, it only creates `openbot` in that key's project if it is missing.
-   For fresh self-hosted setup, set `INTELLIGENCE_API_URL` to that deployment's
-   HTTPS API origin (or `http://localhost` for a local one) and run the helper
-   without the two `npx` commands. It opens an isolated Chrome or Edge window for
-   your usual sign-in and project choice; install either browser first. For CLI-managed
-   local evaluation installs, it discovers the matching dashboard with the newest installed or
-   cached CopilotKit CLI and uses that dashboard for login and session requests. Discovery
-   runs offline with Bun, without downloading the CLI or requiring `npx` on your PATH.
-   If no CLI is available, manually hosted deployments use their API origin for sign-in. Complete the local auth
-   approval shown in the browser when prompted. The runtime API URL stays unchanged. It writes
-   the API URL, the key and the container, not `INTELLIGENCE_GATEWAY_WS_URL`, so
-   set that one to the same deployment yourself. Once `openbot` exists, the server assigns it
-   as the default by itself unless [Admin → Automatic Learning](docs/automatic-learning.md)
-   has a saved setting.
-   Managed Intelligence needs no separate licence token.
-
-   The same CopilotKit CLI sign-in provisions Composio automatically when you run
-   `bash scripts/start.sh`. If that cannot complete, OpenBot still starts, with apps
-   unavailable. You can run `bun run setup:composio` first to prepare it separately, or
-   later to retry; it does not need a Learning container. The helper creates or reuses one
-   isolated Composio project for this installation and saves its project key to `.env`.
-   Existing Composio keys and Arcade configurations are preserved. Keep the private
-   `.env.openbot-installation-id` file across restarts and interrupted setup attempts;
-   do not copy it into a new installation. This needs a published CopilotKit CLI with
-   `integrations composio provision` and the hosted provisioning service enabled.
-   See [Composio setup](docs/plugins/composio.md#automatic-project-setup) for deployment preparation.
-
-3. Fill the remaining required values:
-
-   - `OPENAI_API_KEY`
-
-   Keep the managed Intelligence URLs from `.env.example` unless you run Intelligence yourself. The example `KEY_ENCRYPTION_KEY` is public and fine locally; generate your own with:
-
-   ```sh
-   openssl rand -base64 32
-   ```
-
-4. Run:
-
-   ```sh
-   bash scripts/start.sh
-   ```
-
-5. Open <http://localhost:3010>.
-
-`scripts/start.sh` starts Docker services, applies migrations, starts the API server on port 3001, starts the routine worker, starts the app on port 3010, and checks that the services answer their own health routes before printing next steps.
-
-`scripts/stop.sh` takes the same things down, including each Bot's computer, which compose does not own; `--keep-computers` leaves the computers running. Nothing is deleted: the database, the Bots' files and their browser profiles are volumes.
-
-### On Windows
-
-Run the clone inside WSL 2 with Ubuntu, and run every step above from an Ubuntu terminal.
-[Windows (WSL 2)](docs/development.md#windows-wsl-2) lists what to install in Ubuntu first. Keep an
-Ubuntu terminal open while you use OpenBot, and open the app from your Windows browser at
-<http://127.0.0.1:3010>.
-
-### Intelligence on your own machine
-
-To try Intelligence on one Mac instead of the managed service, follow
-[Evaluate Intelligence locally](https://docs.copilotkit.ai/intelligence/self-hosting-local). The free
-[Developer plan](https://www.copilotkit.ai/pricing) qualifies. The local licence lasts 30 days and
-`npx copilotkit@latest local renew` renews it as often as you need, while your account is in good
-standing. It is a preview for macOS with Docker Desktop,
-not a production installation. Run its
-`npx copilotkit@latest local connect` from the OpenBot root, where `.env` is.
-
-That command writes `INTELLIGENCE_API_URL`, `INTELLIGENCE_GATEWAY_WS_URL` and
-`CPK_INTELLIGENCE_API_KEY` to `.env`. OpenBot reads those settings directly; no key
-copying or renaming is needed. `INTELLIGENCE_API_KEY` remains supported for older
-configurations. When both are set, the non-empty CLI key takes precedence so
-reconnecting uses the new project's key.
-
-To give the Bots a Learning container on that stack, see
-[Automatic Learning](docs/automatic-learning.md).
-
-## Deploy it
-
-One image carries the app, the API, the browser the Bots drive, and optionally PostgreSQL. Same
-`.env`, no Kubernetes.
+Salin fail templat konfigurasi dan sediakan parameter operasi anda. **JANGAN sesekali memasukkan kunci rahsia sebenar ke dalam penjejakan Git**.
 
 ```sh
-# The published image. Nothing to clone and nothing to build.
-docker run -p 3001:3001 --env-file .env \
-  -e EMBEDDED_POSTGRES=on -v openbot-data:/var/lib/postgresql \
-  ghcr.io/copilotkit/openbot:latest
+# Klon repositori kanonikal
+git clone https://github.com/GangNiaga/GangNiagaBot.git
+cd GangNiagaBot
 
-# Or the tree you have in front of you.
-docker build -t openbot .
-docker run -p 3001:3001 --env-file .env \
-  -e EMBEDDED_POSTGRES=on -v openbot-data:/var/lib/postgresql openbot
+# Salin templat pembolehubah persekitaran
+cp .env.example .env
 ```
 
-Everything is on 3001 here, the app included, rather than the 3010 the clone uses. `latest` is the
-most recent release and a version tag such as `:v0.0.9` pins one.
+Contoh templat selamat (`.env`):
 
-Leave `EMBEDDED_POSTGRES` off and set `DATABASE_URL` to point at a database you already run.
-[docs/deployment.md](docs/deployment.md) has the minimum sizes, the platform notes, and how it behaves behind more than one replica.
+```ini
+# --- Konfigurasi Pelayan & Asas ---
+NODE_ENV=development
+PORT=3001
+TRUSTED_ORIGINS=http://localhost:3010,http://127.0.0.1:3010
+OPENBOT_SINGLE_USER=true
+INITIAL_ADMIN_EMAILS=admin@gangniaga.my
 
-## Try it
+# --- Kunci Enkripsi & Rahsia Autentikasi (Jana: openssl rand -base64 32) ---
+KEY_ENCRYPTION_KEY=replace_with_a_secure_base64_32_byte_key_here
+BETTER_AUTH_SECRET=replace_with_a_secure_base64_32_byte_auth_secret_here
+BETTER_AUTH_URL=http://localhost:3001
 
-Pick a task you know well enough to review. For example, ask a Bot to check a hotel receipt against a travel policy in Drive. Have it show the room rate and tax separately so you can decide whether the claim meets the nightly limit. Use **Teach a Bot** to record the steps you want it to follow on the next claim.
+# --- Pangkalan Data (Supabase / PostgreSQL 17) ---
+DATABASE_URL=postgresql://postgres.your-project-id:your-db-password@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres
 
-- Open `/bot` and ask: `Open news.ycombinator.com and tell me the top story.`
-- Ask the Bot to fill out <https://httpbin.org/forms/post>, then inspect `/admin/audit`.
-- Open `/admin/boundaries`, add a deny rule or preset, and retry the same browser action.
-- Create a Bot from `/bots`, give it a standing role, and start a channel with it.
+# --- CopilotKit Runtime & Intelligence ---
+INTELLIGENCE_API_URL=https://api.copilotkit.ai
+INTELLIGENCE_GATEWAY_WS_URL=wss://gateway.copilotkit.ai
+INTELLIGENCE_API_KEY=your_copilotkit_api_key_here
 
-## What it is
+# --- Kunci Pembekal Model AI ---
+OPENAI_API_KEY=your_openai_or_compatible_api_key
+# ANTHROPIC_API_KEY=your_anthropic_api_key
+# GEMINI_API_KEY=your_gemini_api_key
 
-In Personal Edition, you start with one assistant on your computer. With the source template, Docker Compose starts the supporting services, PostgreSQL stores the workspace configuration, and you choose the model. OpenBot encrypts stored model credentials and keeps them out of logs.
+# --- Persekitaran Ejen Kotak Pasir (Podman / Kiri) ---
+COMPUTER_SUPERVISOR_URL=http://127.0.0.1:4500
+COMPUTER_TOKEN=dev_computer_token_replace_in_production
+SUPERVISOR_TOKEN=dev_supervisor_token_replace_in_production
+AGENT_TOOL_TOKEN=dev_tool_token_replace_in_production
 
-The team template comes with two Bots. **General Assistant** helps with everyday work. **Knowledge** answers questions from the company documents you connect and cites its sources.
-
-To add a Bot, open `/bots` or start from one of the [YAML examples](examples/fintech/catalog/). For example, [Meeting Follow-ups](examples/fintech/catalog/meeting-follow-ups.yaml) reads meeting notes and lists who agreed to do what. Copy its file into `examples/fintech/agents/` and restart OpenBot to try it. You grant tool access separately, so you can let a Bot read a document without giving it permission to edit it.
-
-More at [open.bot](https://open.bot).
-
-## Built on AG-UI
-
-A Bot is any endpoint speaking [AG-UI](https://github.com/ag-ui-protocol/ag-ui), the open protocol for agent-to-user interaction, so OpenBot is not tied to a framework and neither are you. Agents built with LangGraph, Mastra, CrewAI, Pydantic AI, Google ADK or written by hand all arrive the same way, and the governance rides the protocol rather than the framework.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/architecture-dark.svg">
-  <img src="assets/architecture-light.svg" alt="You talk to the server, which sends the turn to a Bot over AG-UI. Every tool call the Bot makes comes back through the gateway, which resolves the target, decides it against your policy, records an audit row, and only then acts, or refuses and names the rule. Allowed browser and file actions reach that Bot's own computer, one container each with its own Chromium, logins and workspace, built by the supervisor. Decisions land in PostgreSQL and threads in CopilotKit Intelligence.">
-</picture>
-
-## Main surfaces
-
-| Route                       | Purpose                                                            |
-| --------------------------- | ------------------------------------------------------------------ |
-| `/`                         | Start and browse channels.                                         |
-| `/channel/new`              | Start a conversation; two or more Bots in To: start a group.       |
-| `/channel/:id`              | Converse with one coworker, watch its screen, and see what it ran. |
-| `/bot`                      | Direct chat with a Bot; `?agent=<id>` selects one.                 |
-| `/bots`                     | Every Bot you can reach; create one, and open its page to change it. |
-| `/bots/:id`                 | One Bot: what it waits on you for, what it is doing, and how it is set up. |
-| `/bots/:id/responsibilities` | Give the Bot a lasting goal, follow its progress, and decide when it should work. |
-| `/bots/:id/reach`           | Continue a conversation with the Bot in Slack, Microsoft Teams, or by text message. |
-| `/bots/:id/memory`          | Which connected apps feed the Bot facts, and its background research. |
-| `/bots/:id/approvals`       | What the Bot may do without asking you first.                      |
-| `/connections`              | Connect your apps so your Bots can work with them.                 |
-| `/capabilities/skills`      | Create and enable personal skills.                                 |
-| `/capabilities/memory`      | What your Bots remember about you, and facts you tell them.        |
-| `/routines`                 | See the routines that are standing, and stop one.                  |
-| `/settings`                 | User preferences.                                                  |
-| `/settings/passwords`       | Logins you saved when signing a Bot in to a website.               |
-| `/settings/notifications`   | Where updates go, your devices, and recent deliveries.             |
-| `/settings/approvals`       | Whether your Bots ask before acting, and rules for every Bot.      |
-| `/admin/credentials`        | Store write-only encrypted credentials.                            |
-| `/admin/approvals`          | Team approval settings, team rules, and shared account requests.   |
-| `/admin/computers`          | View, stop, and reset Bot computers.                               |
-| `/admin/boundaries`         | Configure browser/file/MCP action policy.                          |
-| `/admin/components`         | Publish components and govern which Bots may use them.             |
-| `/admin/playground`         | Draft and publish sandboxed components in the browser.             |
-| `/admin/plugins`            | Configure MCP servers and grant their tools to Bots.               |
-| `/admin/skills`             | Write deployment skills and grant them to Bots.                    |
-| `/admin/learning`           | Assign Learning containers to Bots, or pause Automatic Learning.   |
-| `/admin/people`             | List, promote, demote, and remove people who have signed in.       |
-| `/admin/identity-providers` | Register a company SAML or OIDC provider, routed by email domain.  |
-| `/admin/enterprise`         | What members may use, how Bot computers reach the network, and what is recorded about it. |
-| `/admin/audit`              | Review permitted, refused, and failed actions.                     |
-
-## Features
-
-- **A computer per person**: the supervisor gives each person their own container, with a folder and browser profile for each of their Bots. Tick Isolated on a Bot to give it a container of its own. Set `COMPUTER_RUNTIME=runsc` to run them under gVisor where the host supports it.
-- **A shell, not just a browser**: a Bot can run a command in its workspace, install what it needs, and process a file it saved. Through the same gate as everything else, so a rule can refuse a shell outright or refuse particular commands, and the command is on the record either way. The command inherits PATH, locale, terminal and proxy variables, not the rest of the deployment's environment.
-- **The gateway is the only way in**: it resolves the target from a server-held snapshot, evaluates the policy, writes the audit row, and only then calls the computer. There is no path that acts without the record existing first.
-- **CEL policy, fail closed**: rules can inspect `tool.name`, `intent`, `bot.id`, `actor.id`, `page.url`, `page.host`, `element.*`, `key`, `command`, `file.*`, `mcp.*` and `initiator.*` (what started the run, so a rule can refuse a scheduled routine what it would allow a person). Deny is evaluated before allow, a missing policy permits nothing, and a broken rule refuses rather than opens.
-- **Watch what it is doing**: the screen shows what a Bot is looking at, and the Activity list under it shows what it ran, read and saved in this conversation, with the output. A command line in the transcript opens to the same thing. A saved file shows its path and size, never its contents.
-- **Take the wheel**: a Bot that hits a login wall or a 2FA prompt asks for help. Control is handed over in the same panel and recorded as `computer.help_requested`, `computer.control_taken` and `computer.control_released`. While a person is driving, Bot actions are refused rather than queued.
-- **Secrets never enter the transcript**: the trail records that a secret was requested and how long it was, not what it said.
-- **Bring your own agent**: any AG-UI endpoint is a Bot, on a framework or hand-written. Endpoints are validated with the same target checks used for browser navigation, and an auth header is stored write-only.
-- **Components instead of prose**: compiled React components live in `app/src/components/gallery/`, sandboxed ones are authored in `/admin/playground` and published with no deployment. Every call asks the server whether the component exists, is published, and is not withheld from that Bot. Data functions are granted per component.
-- **Governed MCP**: Google Drive, Notion and the [public-web research providers](docs/web-research.md) Parallel, Exa and Firecrawl ship in the catalogue, and Composio brokers a few hundred more apps behind one account, each reached as the person asking. The catalogue carries only vendors this deployment stands behind, so adding one is a review of that vendor. Custom servers must pass URL checks; unknown tools and custom-server tools are treated as writes, and a catalogue tool the server advertises but does not name as a write classifies as a read. A Bot is told which connectors exist here and which it holds, so it says it has not been granted one rather than browsing to the vendor's website.
-- **Skills are instructions, not capabilities**: personal skills attach only to Bots their author owns, deployment skills are admin-owned, and both are invoked with `/` in the composer. A Bot granted the shipped `skill-creator` skill can write one with you in the conversation, and saves it only when you press the button on the card.
-- **Sign in with what your company already has**: Google, Microsoft or Okta from the environment, or a company's own SAML or OpenID Connect provider registered while the deployment runs and routed by email domain. Any one turns sign-in on; several may be configured at once.
-- **Decide who gets in**: `/admin/people` lists everybody who has signed in, promotes and demotes them, and removes access, which ends the session they are using and stops the next sign-in. Every change is on the audit trail.
-- **An audit trail you can read**: `/admin/audit` lists what was permitted, what was refused and what failed, and every refusal carries the rule that caused it.
-- **Credentials encrypted at rest**: stored through `/admin/credentials`, never returned by an API, and redacted from audit events.
-- **Loopback by default**: computers bind to `127.0.0.1` and require a per-container token, so nothing reaches a logged-in browser by knowing its port. The supervisor binds there too, because it holds the Docker socket and its token is a shared secret rather than a network boundary.
-- **Durable threads and memory**: conversations survive restarts through CopilotKit Intelligence, and each deployment stamps the threads it owns.
-- **Routines**: ask a Bot to do something on a schedule and it does, running as you, in the channel you asked in. A 15-minute floor and a cap of 20 enabled routines keep a sentence from scheduling more than a person meant, and ten failures in a row switch a routine off rather than burn model spend forever. Needs a worker process, which `scripts/start.sh` starts locally; see [docs/routines.md](docs/routines.md).
-
-## Bring your own agent
-
-Any AG-UI endpoint can be a Bot.
-
-From `/bots`, create a Bot with:
-
-- name, title, and role description;
-- private or public visibility;
-- optional AG-UI endpoint;
-- optional write-only authorization header.
-
-The server validates agent endpoints with the same target checks used for browser navigation, at registration and again on every redirect the endpoint answers with. If no custom endpoint is set, product-created coworkers use `MANAGED_AGENT_AG_UI_URL` when it is configured, and are refused when it is not.
-
-A private address is refused unless it is listed in `AGENT_ENDPOINT_ALLOWED_HOSTS`:
-
-```sh
-AGENT_ENDPOINT_ALLOWED_HOSTS=agents.internal,10.0.0.42:9000
+# --- Gerbang Pembayaran Stripe & Perbankan Malaysia ---
+STRIPE_SECRET_KEY=sk_test_replace_with_test_or_live_key
+STRIPE_WEBHOOK_SECRET=whsec_replace_with_webhook_signing_secret
 ```
 
-A host on its own covers any port on that host; a host with a port pins that port. Matching is exact: no wildcards, no suffixes. An entry written as a URL, or containing `*`, stops startup and names that entry.
+---
 
-The list covers agent endpoints only. Browsing is unaffected, the addresses holding a deployment's own cloud credentials are refused whatever is listed, and listing an address permits registering an agent there rather than granting that agent anything.
+### 3. Migrasi Pangkalan Data Drizzle
 
-Tenant package agents are declared in the package's own `agents.yaml`, in the directory `TENANT_PACKAGE_DIR` names (`examples/fintech` by default), or each in a file of its own under that package's `agents/` directory, as either:
-
-- `built-in`, with a system prompt; or
-- `remote-ag-ui`, with an endpoint.
-
-See [docs/configuration.md](docs/configuration.md) and [docs/coworkers.md](docs/coworkers.md).
-
-## Configuration
-
-`.env.example` is the source template. The API server refuses to start without:
-
-- `DATABASE_URL`
-- `KEY_ENCRYPTION_KEY`
-- `INTELLIGENCE_API_URL`
-- `INTELLIGENCE_GATEWAY_WS_URL`
-- `INTELLIGENCE_API_KEY`
-
-`COPILOTKIT_LICENSE_TOKEN` is optional. A self-hosted Intelligence with its own
-licence can still set it and it is forwarded to the runtime; managed Intelligence
-does not issue one and startup no longer asks for it. A self-hosted Intelligence
-also needs the licence on its own deployment, or it refuses memory; OpenBot logs
-`intelligence-entitlement-not-ready` at boot when that is missing.
-
-Settings worth knowing:
-
-| Variable                             | Use                                                                       |
-| ------------------------------------ | ------------------------------------------------------------------------- |
-| `OPENBOT_SINGLE_USER`                | Admits every request as one administrator. Required when no identity provider is configured; `.env.example` ships it on. |
-| `OPENAI_BASE_URL`                    | Answers the OpenAI-shaped calls from somewhere else: a gateway, a proxy.  |
-| `COPILOTKIT_OPENAI_API`              | `responses` or `chat`: the OpenAI API the built-in Bots call behind that `OPENAI_BASE_URL`. Unset, models that take tools only through the Responses API (`gpt-5.6` and later) get `responses` and the rest get `chat`. |
-| `ANTHROPIC_BASE_URL`, `GOOGLE_GENERATIVE_AI_BASE_URL` | The same, for those two APIs.            |
-| `COMPUTER_TOKEN`                     | Secret every Bot computer request must present. `start.sh` falls back to a fixed dev value. |
-| `SUPERVISOR_TOKEN`                   | Secret the supervisor requires. `start.sh` falls back to a fixed dev value. |
-| `AGENT_TOOL_TOKEN`                   | Secret a Bot presents to call a granted tool back. `start.sh` sets one. Without it no Bot may call tools. |
-| `COMPUTER_SUPERVISOR_URL`            | Gives each person a computer of their own instead of one shared computer. |
-| `COMPUTER_RUNTIME`                   | Set to `runsc` to run computers under gVisor, where the host has it.      |
-| `COMPUTER_SANDBOX`                   | Set to `on` for Chromium's own sandbox, where the host permits it.        |
-| `EMBEDDED_POSTGRES`                  | Set to `on` for a database inside the deployment container.               |
-| `AGENT_COMPUTER_POLICY`              | JSON action policy. Malformed JSON stops server startup.                  |
-| `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` | Lets a Bot reach this machine's own services. Local only, and refused under `NODE_ENV=production`. |
-| `AGENT_ENDPOINT_ALLOWED_HOSTS`       | Private addresses an agent may be registered at, comma separated. A host, optionally with a port. |
-| `TENANT_PACKAGE_DIR`                 | Directory containing tenant YAML. Defaults to `../examples/fintech`.      |
-| `DEPLOYMENT_ID`                      | Names this deployment when two share one Intelligence project.            |
-| `OPENBOT_SELF_HOST_BANNER`           | Set `false` to hide the bar offering CopilotKit's help self-hosting OpenBot. It never shows on a paid Intelligence plan. |
-
-Full reference: [docs/configuration.md](docs/configuration.md).
-
-## Services and ports
-
-| Service                  | Port                       | Purpose                                                                                          |
-| ------------------------ | -------------------------- | ------------------------------------------------------------------------------------------------ |
-| `app`                    | 3010                       | React/Vite UI.                                                                                   |
-| `server`                 | 3001                       | Hono API, CopilotKit runtime, auth, policy, audit, plugins, components, coworkers, and channels. |
-| `agent-computer`         | 4100                       | Chromium plus `/workspace` and browser profile.                                                  |
-| `agent-bot`              | 4200                       | Proof-of-concept AG-UI Bot.                                                                          |
-| `agent-langgraph`        | 4201                       | LangGraph AG-UI Bot.                                                                             |
-| `supervisor`             | 4500 host / 4300 container | Creates and manages one computer per person, and one per Isolated Bot.                           |
-| `worker`                 | none                       | Fires due routines by handing each run to the server.                                            |
-| PostgreSQL with pgvector | 5432                       | Product data, policy, audit, credentials, grants, channels, and component metadata.              |
-| CopilotKit Intelligence  | external                   | Durable threads and memory.                                                                      |
-
-The server gateway is the product/API path for Bot browser and file tool calls.
-It resolves the target, evaluates policy, writes an audit row, and then calls
-`agent-computer`. The computer also exposes lower-level token-protected service
-endpoints; keep them private and do not use them to bypass the gateway.
-
-More detail: [docs/architecture.md](docs/architecture.md).
-
-## Sign in
-
-`.env.example` ships `OPENBOT_SINGLE_USER=true`, which is one administrator and no sign-in: how a
-fresh clone reaches the product without registering an OAuth client first. Delete that line and
-configure **any one** of Google, Microsoft or Okta before anybody else can reach the deployment.
-With neither, it refuses to start rather than admitting everybody as an administrator. Configure
-more than one provider and the sign-in screen offers each of them.
-
-These four are needed whichever you pick:
+Sahkan integriti skema Drizzle dan laksanakan migrasi ke atas pangkalan data Supabase:
 
 ```sh
-BETTER_AUTH_URL=http://localhost:3001        # where OAuth callbacks come back to
-BETTER_AUTH_SECRET=                          # openssl rand -base64 32
-TRUSTED_ORIGINS=http://localhost:3010        # where the app is served from
-INITIAL_ADMIN_EMAILS=you@example.com         # comma separated
+# Semak konsistensi skema Drizzle berbanding fail migrasi
+bunx drizzle-kit check
+
+# Laksanakan 90 fail migrasi ke pangkalan data sasaran
+bun run --cwd server db:migrate
 ```
 
-Then the provider. Register the redirect URI shown beside it.
+---
+
+### 4. Menjalankan Pelayan Pembangunan & Ujian
+
+Pasang semua dependensi projek dan lancarkan perkhidmatan:
 
 ```sh
-# Google — http://localhost:3001/api/auth/callback/google
-GOOGLE_OAUTH_CLIENT_ID=
-GOOGLE_OAUTH_CLIENT_SECRET=
+# 1. Pasang dependensi ruang kerja
+bun install
 
-# Microsoft — http://localhost:3001/api/auth/callback/microsoft
-MICROSOFT_OAUTH_CLIENT_ID=
-MICROSOFT_OAUTH_CLIENT_SECRET=
-MICROSOFT_OAUTH_TENANT_ID=common             # your directory GUID for staff only
+# 2. Lancarkan pelayan frontend dan backend serentak
+bun run dev
 
-# Okta — http://localhost:3001/api/auth/callback/okta
-OKTA_OAUTH_CLIENT_ID=
-OKTA_OAUTH_CLIENT_SECRET=
-OKTA_OAUTH_ISSUER=https://example.okta.com/oauth2/default
+# 3. Atau gunakan skrip orkestrasi lengkap bersama kontena pembantu:
+# bash scripts/start.sh
 ```
 
-Restart. Accounts, sessions and roles are stored in the same PostgreSQL database as everything else.
+Akses aplikasi web di pelayar anda:
+* **Frontend Dashboard**: [http://localhost:3010](http://localhost:3010)
+* **API Server Health**: [http://localhost:3001/api/health](http://localhost:3001/api/health)
 
-A company's own SAML or OpenID Connect provider is registered while the deployment runs, under
-Admin → Identity providers, and routed by email domain. An OIDC registration needs every host in the
-provider's discovery document listed in `TRUSTED_ORIGINS`, not only the issuer.
+#### Pemeriksaan Kualiti & Ujian Unit
 
-- `INITIAL_ADMIN_EMAILS` is required, because it is what grants the first administrator. After that
-  `/admin/people` can promote others, but an address named here stays an administrator and cannot be
-  demoted or removed from that screen. It is re-read on every sign-in, so editing it takes effect
-  the next time that person signs in.
-- `MICROSOFT_OAUTH_TENANT_ID` defaults to `common`, which admits personal Microsoft accounts as well
-  as work ones. On a multi-tenant app registration Entra may send no `email` claim at all, so
-  OpenBot falls back to `upn` and then `preferred_username`. If none of the three arrives the
-  sign-in is refused and the reason is logged: add `email` as an optional claim, or use your
-  directory GUID here.
-- A half-configured provider is refused at start-up rather than at somebody's first attempt to sign
-  in: a client id with no secret, a `BETTER_AUTH_SECRET` shorter than 32 characters, or an Okta issuer with no
-  credentials behind it.
-- **SAML and OIDC** are registered while the deployment runs rather than configured here. Sign in as
-  an administrator and go to Admin → Identity providers with the metadata your identity team gave
-  you. People then sign in by typing their email address, and the domain decides which provider
-  they are sent to.
-- **Put TLS in front of any deployment.** A page served over plain `http://` on anything but
-  localhost is not a secure context, and sign-in cookies want `Secure`.
-
-### Organization sign-in for desktop installations
-
-For an employee desktop, provision an OpenBot authority using the Google, Microsoft or Okta
-settings above (your Kubernetes OpenBot can serve this role). Set **Organization OpenBot URL**
-in the desktop connection screen, or `OPENBOT_ORGANIZATION_AUTH_URL=https://openbot.company.example`
-in its public configuration. Use an HTTPS origin; HTTP is accepted only on loopback for local tests.
-Provider client secrets stay on that authority. Template and white-label deployments can supply
-the same setting without changing their Intelligence endpoint.
-
-This optional URL is separate from `INTELLIGENCE_API_URL`, `INTELLIGENCE_GATEWAY_WS_URL` and
-`INTELLIGENCE_API_KEY`. Local, managed and customer-hosted Intelligence all retain their project
-credential. A Google ID token is not an Intelligence project key. Leave the organization URL empty
-for a standalone desktop.
-
-Desktop sign-in uses the system browser and Better Auth's single-use PKCE exchange. The authority
-verifies the employee and current role; organization mode never substitutes `dev@openbot.local`.
-Employees do not need project-key administration privileges. Installation happens once: reopening
-or refreshing an expired organization, Intelligence or model connection preserves the installed
-runtime and data and opens the relevant connection screen.
-
-## Keeping it to your machine
-
-- `agent-computer` drives a browser holding real logins. `docker-compose.yml` binds it to loopback; leave it there.
-- Store credentials through `/admin/credentials`, which encrypts them. Do not put credential values in tenant YAML or in committed files.
-- `AGENT_COMPUTER_ALLOW_PRIVATE_HOSTS` lets a Bot reach services on this machine. It ships commented out in `.env.example`, is for a laptop only, and a deployment running with `NODE_ENV=production` refuses to start while it is set.
-- To reach an agent on your own network from a deployment, list its address in `AGENT_ENDPOINT_ALLOWED_HOSTS` instead. That permits the one address, where the switch above permits the network.
-
-## Development
+Pastikan kod anda mematuhi piawaian sebelum membuat penyerahan:
 
 ```sh
+# Format & Linting (Biome)
 bun run format:check
 bun run lint
+
+# Pemeriksaan Jenis TypeScript
 bun run typecheck
-bun run test
-bun run build
+
+# Ujian Unit Komprehensif
+bun test
 ```
 
-After changing the Drizzle schema:
+---
 
-```sh
-bun run --filter server db:generate
-bun run --filter server db:migrate
+## 💳 Modul Pembayaran & Lejar B2B
+
+GangNiagaBot menyertakan lejar kewangan bertaraf perusahaan yang diperkenalkan melalui migrasi **`0089_payment_transactions.sql`** dan model TypeScript **`server/src/db/schema/payment.ts`**.
+
+### Skema & Integriti Data Supabase
+
+Pangkalan data awan Supabase PostgreSQL 17 (`wmuxfyymcgapqcyznltp`) dikonfigurasi dengan lapisan keselamatan ketat:
+1. **Row-Level Security (RLS)**: Diaktifkan secara mutlak (`relrowsecurity = true`) ke atas jadual:
+   - `payment_transactions`
+   - `payment_events`
+2. **Kekangan Integriti (CHECK Constraints)**:
+   - **Kuantiti Amaun Positif**: `CHECK (amount > 0)` — Menghalang ralat caj negatif atau nilai sifar.
+   - **Senarai Gerbang Sah**: `CHECK (gateway = ANY (ARRAY['duitnow_qr', 'fpx', 'stripe', 'manual']))`
+   - **Kitaran Status Transaksi Sah**: `CHECK (status = ANY (ARRAY['pending', 'processing', 'succeeded', 'paid', 'failed', 'expired', 'refunded']))`
+3. **Pencegahan Pembayaran Berganda (Idempotency)**: Indeks unik pada `gateway_txn_id` memastikan setiap transaksi pembekal luaran hanya direkodkan sekali sahaja.
+4. **Pemicu Masa Nyata (Trigger)**: `trg_payment_transactions_updated_at` (sebelum operasi `UPDATE`) mengemas kini cap masa `updated_at` secara automatik.
+
+```sql
+-- Struktur Ringkas Jadual Lejar (server/drizzle/0089_payment_transactions.sql)
+CREATE TABLE IF NOT EXISTS "payment_transactions" (
+    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+    "company_id" text,
+    "gateway" text NOT NULL,
+    "gateway_txn_id" text,
+    "amount" bigint NOT NULL,
+    "currency" text DEFAULT 'MYR',
+    "status" text DEFAULT 'pending' NOT NULL,
+    "qr_code_url" text,
+    "qr_code_data" text,
+    "customer_email" text,
+    "customer_name" text,
+    "metadata" jsonb DEFAULT '{}'::jsonb,
+    "expired_at" timestamp with time zone,
+    "paid_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT now(),
+    "updated_at" timestamp with time zone DEFAULT now()
+);
 ```
 
-Use `bash scripts/start.sh` for the whole stack and `bash scripts/stop.sh` to take it down. Use `bun run dev` only when you want the app and server without the Docker Bots and computers.
+### Pelan Langganan Enterprise gangniaga.my
 
-## Project status
+Sistem langganan B2B dihubungkan terus dengan produk berdaftar Stripe:
 
-[![CI](https://github.com/CopilotKit/openbot/actions/workflows/ci.yml/badge.svg)](https://github.com/CopilotKit/openbot/actions/workflows/ci.yml)
-[![security](https://github.com/CopilotKit/openbot/actions/workflows/security_zizmor.yml/badge.svg)](https://github.com/CopilotKit/openbot/actions/workflows/security_zizmor.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
-[![Latest OpenBot release](https://img.shields.io/github/v/release/CopilotKit/OpenBot?label=release&color=blue)](https://github.com/CopilotKit/OpenBot/releases/latest)
+| Kod Pelan | Nama Pelan | Harga (MYR) | Terma Pengebilan | Faedah Tambahan |
+| :--- | :--- | :--- | :--- | :--- |
+| `gangniaga_b2b_monthly` | **GangNiaga B2B Monthly** | **RM 299.00 / bln** *(29,900 sen)* | Bulanan (Billed monthly) | Akses penuh ejen berautonomi, 5 komputer kotak pasir serentak, sokongan tiket pantas. |
+| `gangniaga_b2b_annual` | **GangNiaga B2B Annual** | **RM 2,990.00 / thn** *(299,000 sen)* | Tahunan (Billed annually) | **Percuma 2 bulan penjimatan**, 15 komputer kotak pasir, pengurus akaun khusus & SLA 99.9%. |
 
-## Documentation
+### Saluran Pembayaran Tempatan & Global
 
-- [open.bot](https://open.bot)
-- [docs/README.md](docs/README.md)
-- [docs/architecture.md](docs/architecture.md)
-- [docs/configuration.md](docs/configuration.md)
-- [docs/personal-edition.md](docs/personal-edition.md): OpenBot for one person, with no sign-in and no Admin
-- [docs/development.md](docs/development.md)
-- [docs/coworkers.md](docs/coworkers.md)
-- [docs/routines.md](docs/routines.md)
-- [docs/automatic-learning.md](docs/automatic-learning.md)
-- [docs/deployment.md](docs/deployment.md)
-- [charts/openbot/README.md](charts/openbot/README.md): the Helm chart
-- [docs/releasing.md](docs/releasing.md)
-- [docs/web-research.md](docs/web-research.md): public-web search and extraction through Parallel, Exa or Firecrawl
+* **Stripe Billing & Invoicing**: Sokongan kad kredit/debit antarabangsa, invois korporat berjadual (terma pembayaran Net 14), dan Customer Billing Portal layan diri.
+* **DuitNow QR Malaysia**: Penjanaan kod QR standard EMVCo kebangsaan membolehkan pembayaran mudah alih segera daripada mana-mana aplikasi perbankan atau e-dompet tempatan (Maybank MAE, CIMB OCTO, Touch 'n Go eWallet, Boost).
+* **FPX Online Banking**: Pembayaran terus antara akaun bank komersial dan runcit di Malaysia.
 
-## Contributing
+---
 
-- Open an issue or coordinate before starting substantial work.
-- Keep changes focused and update docs when setup, configuration, architecture, or user behavior changes.
-- Keep secrets, service-account JSON, customer data, and local transcripts out of the repository.
-- Run the checks in [Development](#development) before opening a pull request.
+## 🛡️ Kualiti Kod & Aliran Kerja CI/CD
 
-## License
+Integriti kod disahkan secara berterusan melalui dua lapisan pengesahan: gerbang automatik GitHub Actions dan skrip audit integriti tempatan.
 
-The OpenBot application source is [MIT-licensed](./LICENSE) © CopilotKit. CopilotKit Intelligence is separately licensed. OpenBot for Business includes Intelligence for use with OpenBot. See [plans and pricing](https://open.bot/pricing).
+### Gerbang CI GitHub Actions
+
+Setiap `pull_request` dan `push` ke cawangan `main` melepasi saluran semakan ketat dalam `.github/workflows/ci.yml`:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                      GANGNIAGABOT CI PIPELINE                          │
+├─────────────────┬──────────────────┬─────────────────┬─────────────────┤
+│ 1. Migrations   │ 2. Static Checks │ 3. Test Shards  │ 4. Verification │
+│                 │                  │                 │                 │
+│ • Drizzle check │ • Biome format   │ • Shard 1 / 5   │ • Real Browser  │
+│ • Schema audit  │ • Biome lint     │ • Shard 2 / 5   │   (Playwright)  │
+│ • 90 migrations │ • TypeScript     │ • Shard 3 / 5   │ • Desktop Types │
+│   verified      │   strict check   │ • Shard 4 / 5   │ • Production    │
+│                 │ • Tests baseline │ • Shard 5 / 5   │   Build         │
+└─────────────────┴──────────────────┴─────────────────┴─────────────────┘
+```
+
+1. **`migrations`**: Mengesahkan konsistensi skema pangkalan data dan memvalidasi rekod migrasi.
+2. **`format, lint, types`**: Memeriksa pemformatan kod melalui Biome, peraturan linting ketat tanpa amaran (*zero warnings*), dan pengesyoran jenis TypeScript di seluruh ruang kerja.
+3. **`test shards (1..5)`**: Mengasingkan suite ujian unit dan integrasi ke dalam lima mesin pelari selari untuk kepantasan dan kebolehpercayaan tinggi.
+4. **`computer (real browser)`**: Menjalankan ujian tingkah laku pelayar sebenar berasaskan Playwright Chromium tanpa mod olok-olok (*mock*).
+5. **`build`**: Mengkompilasi artefak pengeluaran akhir untuk memastikan binaan sentiasa boleh digunakan (*deployable*).
+
+### Pengesahan Tempatan (`verify-stack.ps1`)
+
+Untuk memvalidasi keseluruhan stack merangkumi repositori GitHub, pangkalan data, perkhidmatan API tempatan, dan runtime kontena Kiri v0.2.0, jalankan skrip pengesahan:
+
+```powershell
+# Jalankan audit keselamatan dan kesihatan stack penuh (Mod Ketat)
+C:/Users/megat/Scripts/agy-verify.cmd --cwd G:\PILOTKIT -- pwsh -NoProfile -File G:\PILOTKIT\scripts\verify-stack.ps1 -Check -Strict
+```
+
+---
+
+## 📜 Pelesenan & Kredit
+
+* **Kod Sumber Terbuka**: Dilesenkan di bawah [Lesen MIT](./LICENSE). Anda bebas untuk menggunakan, menyalin, mengubah suai, dan mengedarkan perisian ini tertakluk kepada syarat lesen.
+* **Seni Bina Asas**: Dibina di atas inovasi platform [OpenBot](https://github.com/CopilotKit/OpenBot) oleh CopilotKit Inc. dan protokol terbuka [AG-UI](https://github.com/ag-ui-protocol/ag-ui).
+* **Pembangunan & Integrasi Perusahaan**: Dioptimumkan dan diselenggara untuk ekosistem autonomi perniagaan oleh pasukan **GangNiaga** ([gangniaga.my](https://gangniaga.my)).
