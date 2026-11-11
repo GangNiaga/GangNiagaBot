@@ -52,4 +52,3 @@ export type PaymentTransaction = InferSelectModel<typeof paymentTransactions>;
 export type NewPaymentTransaction = InferInsertModel<
   typeof paymentTransactions
 >;
-
