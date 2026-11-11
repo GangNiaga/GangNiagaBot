@@ -30,7 +30,6 @@ export function SelfHostBanner() {
   return (
     <aside
       aria-label="Self-host OpenBot"
-      role="complementary"
       className="relative flex items-center justify-between border-b bg-muted/50 px-4 py-2 text-sm"
     >
       <span>Self-host OpenBot for your organization.</span>
