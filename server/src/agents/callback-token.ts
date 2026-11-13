@@ -341,18 +341,13 @@ export async function authoriseAgentCall(options: {
   run: unknown;
   /** The deployment key the assertion was signed with. */
   encryptionKey: string;
-  /**
-   * The deployment-wide token, still accepted for the Bots that ship in the box.
-   *
-   * It authenticates only. The Bot and the actor still come from the assertion, so it cannot be used
-   * to spend another Bot's grants or to write somebody else's name into the trail. Empty disables it.
-   */
+  /** @deprecated Ignored; only registered per-agent tokens are accepted. */
   legacyToken?: string;
   /** Which agent holds a token hash, if any. */
   lookup: (hash: string) => Promise<{ id: string } | null>;
   now?: number;
 }): Promise<CallVerdict> {
-  const { presented, run, encryptionKey, legacyToken, lookup, now } = options;
+  const { presented, run, encryptionKey, lookup, now } = options;
 
   if (!presented) return { ok: false, status: 401, reason: "Not authorised." };
 
@@ -367,9 +362,7 @@ export async function authoriseAgentCall(options: {
 
   const caller = looksLikeCallbackToken(presented)
     ? await lookup(hashCallbackToken(presented))
-    : legacyToken && sameToken(presented, legacyToken)
-      ? { id: assertion.botId }
-      : null;
+    : null;
 
   if (!caller) return { ok: false, status: 401, reason: "Not authorised." };
 

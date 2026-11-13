@@ -180,21 +180,8 @@ describe("who may call a tool back, and as whom", () => {
     expect(badToken).toEqual(badAssertion);
   });
 
-  test("accepts the deployment-wide token, and still takes identity from the assertion", async () => {
-    // The Bots in the box are configured with it. It authenticates; it does not assert.
-    expect(await call("legacy-secret", runForA(), "legacy-secret")).toEqual({
-      ok: true,
-      botId: AGENT_A,
-      actorId: "visitor_9",
-      initiator: { kind: "person" },
-      run: {
-        botId: AGENT_A,
-        actorId: "visitor_9",
-        runId: "r1",
-        depth: 0,
-        initiator: { kind: "person" },
-      },
-    });
+  test("refuses the retired deployment-wide token even with a valid assertion", async () => {
+    expect(await call("legacy-secret", runForA(), "legacy-secret")).toEqual({ok:false,status:401,reason:"Not authorised."});
   });
 
   test("refuses the deployment-wide token when it is not configured", async () => {
@@ -390,8 +377,8 @@ describe("how deep a run is", () => {
  * decision, not a disclosure decision.
  */
 describe("the tool-call route a callback token guards", () => {
-  /** The deployment-wide token, which authenticates without naming a Bot of its own. */
-  const DEPLOYMENT_TOKEN = "deployment-wide-agent-token";
+  /** A registered token bound to the knowledge Bot used by these route fixtures. */
+  const DEPLOYMENT_TOKEN = mintCallbackToken();
 
   const config = loadConfig(
     testEnvironment({ AGENT_TOOL_TOKEN: DEPLOYMENT_TOKEN }),
@@ -414,7 +401,7 @@ describe("the tool-call route a callback token guards", () => {
       undefined,
       undefined,
       undefined,
-      undefined,
+      {agentForCallbackToken: async (hash:string) => hash===hashCallbackToken(DEPLOYMENT_TOKEN) ? {id:"knowledge"} : null} as unknown as import("../src/agents/profile-store").AgentProfileStore,
       undefined,
       undefined,
       undefined,
@@ -615,7 +602,7 @@ describe("the tool-call route a callback token guards", () => {
       undefined,
       undefined,
       undefined,
-      undefined,
+      {agentForCallbackToken: async (hash:string) => hash===hashCallbackToken(DEPLOYMENT_TOKEN) ? {id:"knowledge"} : null} as unknown as import("../src/agents/profile-store").AgentProfileStore,
       undefined,
       undefined,
       undefined,

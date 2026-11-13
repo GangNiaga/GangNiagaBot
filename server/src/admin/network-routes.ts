@@ -177,14 +177,19 @@ export function createNetworkAllowlistRoutes(options: {
     });
     // One after another: see the note in controls.ts about concurrent statements on one connection.
     const rows = await controls.store.networkPolicies();
-    const owners = new Map<
-      string,
-      NonNullable<Awaited<ReturnType<typeof controls.networkMemberFor>>>
-    >();
-    for (const bot of visitingBots(events)) {
-      const owner = await controls.networkMemberFor(bot);
-      if (owner) owners.set(bot, owner);
-    }
+    const botIds = visitingBots(events);
+    const owners = controls.networkMembersFor
+      ? await controls.networkMembersFor(botIds)
+      : new Map<
+          string,
+          NonNullable<Awaited<ReturnType<typeof controls.networkMemberFor>>>
+        >();
+    // Compatibility for embedded controls implementations; the production store uses one batch.
+    if (!controls.networkMembersFor)
+      for (const bot of botIds) {
+        const owner = await controls.networkMemberFor(bot);
+        if (owner) owners.set(bot, owner);
+      }
     return context.json({
       report: replayNetworkPolicy({ candidate, rows, events, owners }),
     });

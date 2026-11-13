@@ -11,7 +11,10 @@ import { randomUUID } from "node:crypto";
 import type { BaseEvent } from "@ag-ui/client";
 import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
-import { mintRunAssertion } from "../src/agents/callback-token";
+import {
+  mintCallbackToken,
+  mintRunAssertion,
+} from "../src/agents/callback-token";
 import { createApp } from "../src/app";
 import { createAuditStore } from "../src/audit";
 import { loadConfig } from "../src/config";
@@ -44,6 +47,7 @@ import { createPluginStore } from "../src/plugins/store";
 import { grantedTools } from "../src/plugins/tools";
 import { createRoutineStore } from "../src/routines/store";
 import { loadTenantPackage } from "../src/tenant-package";
+import { callbackProfiles } from "./support/callback-profiles";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
 import { testEnvironment } from "./support/environment";
 import {
@@ -404,13 +408,13 @@ describe("a routine asked for by a Bot running its own loop", () => {
   test("is made for the conversation its signed run is in", async () => {
     // The other door to the same store: a framework Bot calls back over HTTP, and the conversation
     // it is in arrives in the run assertion this deployment signed for it, never in the arguments.
-    const config = loadConfig(
-      testEnvironment({ AGENT_TOOL_TOKEN: "deployment-wide-agent-token" }),
-    );
+    const callbackToken = mintCallbackToken();
+    const config = loadConfig(testEnvironment());
     const parameters = new Array(createApp.length) as unknown as Parameters<
       typeof createApp
     >;
     parameters[0] = config;
+    parameters[9] = callbackProfiles(callbackToken, BOT);
     parameters[14] = pluginStore;
 
     const response = await createApp(...parameters).request(
@@ -419,7 +423,7 @@ describe("a routine asked for by a Bot running its own loop", () => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-openbot-agent-token": "deployment-wide-agent-token",
+          "x-openbot-agent-token": callbackToken,
         },
         body: JSON.stringify({
           name: "mcp__routines__create_routine",

@@ -3157,6 +3157,29 @@ const app = createApp(
   {
     productTelemetry,
     approvals: approvalService,
+    toolCatalog: async (actorId, botId, threadId) => {
+      const tools = await loadToolsForActor(actorId)(botId);
+      if (threadId) {
+        const run = {
+          actorId,
+          botId,
+          threadId,
+          runId: "catalog",
+          initiator: PERSON_INITIATOR,
+        };
+        // The runtime's authority verifies conversation ownership before exposing coordination tools.
+        const contextual = await coordination.toolsForRun(run);
+        if (contextual.length)
+          tools.push(...contextual, subagents.toolForRun(run));
+      }
+      return tools.map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        parameters: z.toJSONSchema(tool.parameters) as Record<string, unknown>,
+        requiredPermissions: [tool.ref],
+        category: tool.searchable ? "integration" : "core",
+      }));
+    },
     shared: { modes: accountModes, use: sharedUseStore },
     ...(signInService ? { passwords: signInService } : {}),
     recorder: recorderExtension,

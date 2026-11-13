@@ -23,7 +23,7 @@ export function signOutMutationOptions(queryClient: QueryClient) {
     mutationFn: signOut,
     onSuccess: () => {
       clearSkin();
-      queryClient.removeQueries({ queryKey: authKeys.all });
+      queryClient.clear();
     },
   });
 }

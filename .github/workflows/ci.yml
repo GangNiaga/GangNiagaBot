@@ -702,8 +702,9 @@ jobs:
     # seconds and stay on every push, because they catch most things cheaply. This one is the cost, so
     # on a pull request it runs only when an admin adds the `full-ci` label — the point at which the PR
     # is actually a merge candidate. On main and through the release workflow_call it always runs, so
-    # nothing reaches a release without it. `verify` treats a skipped job as passing, so an unlabelled
-    # PR is green on the cheap checks alone. It runs on the 16-core larger runner everywhere except
+    # nothing reaches a release without it. `verify` treats a skipped container gate as a failure, so
+    # an unlabelled PR is not green: it has to pass the labelled image run before it can merge.
+    # It runs on the 16-core larger runner everywhere except
     # pull requests from forks, which stay on the free standard runner.
     if: >-
       github.event_name != 'pull_request' ||
@@ -1018,6 +1019,9 @@ jobs:
       - name: Require every check
         env:
           RESULTS: ${{ join(needs.*.result, ' ') }}
+          IMAGE_RESULT: ${{ needs.image.result }}
+          COMPONENT_DOCKERFILES_RESULT: ${{ needs.component-dockerfiles.result }}
+          FULL_CI_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'full-ci') }}
         run: |
           set -euo pipefail
           echo "$RESULTS"
@@ -1027,3 +1031,19 @@ jobs:
               *) echo "::error::A required check reported $result"; exit 1 ;;
             esac
           done
+          # `image` and `component-dockerfiles` build and boot the production container images.
+          # They only run on a pull request when the `full-ci` label is present, so a skipped
+          # container gate means the documented production-build gate never ran for this PR.
+          # A skipped container gate is a failure, not a pass: label the PR with `full-ci` so
+          # the real image build runs. On `main` and through the release `workflow_call` these
+          # jobs always execute, so nothing can reach a release without them.
+          if [ "$FULL_CI_LABEL" != "true" ]; then
+            for pair in "image:$IMAGE_RESULT" "component-dockerfiles:$COMPONENT_DOCKERFILES_RESULT"; do
+              job="${pair%%:*}"
+              result="${pair##*:}"
+              if [ "$result" = "skipped" ]; then
+                echo "::error::$job was skipped, so the production image gate did not run for this pull request. Add the full-ci label and re-run the workflow."
+                exit 1
+              fi
+            done
+          fi

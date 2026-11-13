@@ -1,10 +1,13 @@
 import {
   createRootRouteWithContext,
-  Navigate,
   Outlet,
+  useCanGoBack,
+  useRouter,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useDesktopOpenRequests } from "@/lib/desktop/open-requests";
@@ -13,13 +16,73 @@ import "@fontsource-variable/inter/wght.css";
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootComponent,
-  /*
-   * An address this build does not know goes home rather than to a dead end. Home sits behind the
-   * auth gate, so the guard decides what that means: /sign for a visitor, /onboarding for somebody
-   * who has not finished it, the app for everyone else.
-   */
-  notFoundComponent: () => <Navigate replace to="/" />,
+  errorComponent: RootErrorComponent,
+  notFoundComponent: NotFoundComponent,
 });
+
+function NotFoundComponent() {
+  const router = useRouter();
+
+  return (
+    <main className="grid min-h-dvh place-items-center bg-background px-6 text-foreground">
+      <section className="w-full max-w-md text-center" aria-labelledby="not-found-title">
+        <p className="text-sm font-medium text-muted-foreground">404</p>
+        <h1 id="not-found-title" className="mt-2 text-3xl font-semibold">
+          Page not found
+        </h1>
+        <p className="mt-3 text-muted-foreground">
+          The page may have moved or the address may be incorrect.
+        </p>
+        <Button
+          className="mt-6"
+          onClick={() => void router.navigate({ to: "/" })}
+        >
+          Go home
+        </Button>
+      </section>
+    </main>
+  );
+}
+
+function RootErrorComponent({ error, reset }: ErrorComponentProps) {
+  const router = useRouter();
+  const canGoBack = useCanGoBack();
+  const titleRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, []);
+
+  return (
+    <main className="grid min-h-dvh place-items-center bg-background px-6 text-foreground">
+      <section className="w-full max-w-md text-center" role="alert">
+        <h1
+          id="root-error-title"
+          ref={titleRef}
+          className="text-3xl font-semibold"
+          tabIndex={-1}
+        >
+          Something went wrong
+        </h1>
+        <p className="mt-3 text-muted-foreground">
+          {error instanceof Error ? error.message : "The page could not be loaded."}
+        </p>
+        <div className="mt-6 flex justify-center gap-3">
+          <Button onClick={reset}>Try again</Button>
+          <Button
+            onClick={() => {
+              if (canGoBack) router.history.back();
+              else void router.navigate({ to: "/" });
+            }}
+            variant="outline"
+          >
+            Go back
+          </Button>
+        </div>
+      </section>
+    </main>
+  );
+}
 
 /**
  * A FILE DROPPED ON A PART OF THIS APP THAT WANTED NO FILE DOES NOT UNLOAD THIS APP.

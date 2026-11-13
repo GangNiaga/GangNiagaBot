@@ -1,20 +1,25 @@
 import { describe, expect, test } from "bun:test";
-import { mintRunAssertion } from "../src/agents/callback-token";
+import {
+  mintCallbackToken,
+  mintRunAssertion,
+} from "../src/agents/callback-token";
 import { createApp } from "../src/app";
 import { loadConfig } from "../src/config";
 import { createHostAccessBroker } from "../src/host-access/broker";
 import { hostAccessTools } from "../src/host-access/tools";
+import { callbackProfiles } from "./support/callback-profiles";
 import { testEnvironment } from "./support/environment";
 
+const TOKEN = mintCallbackToken();
 const KEY = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
 
 function appWithHostDispatcher(
   broker: ReturnType<typeof createHostAccessBroker>,
 ) {
-  return createApp(
+  const dependencies: Parameters<typeof createApp> = [
     loadConfig(
       testEnvironment({
-        AGENT_TOOL_TOKEN: "legacy-agent-tool-token",
+        AGENT_TOOL_TOKEN: TOKEN,
         KEY_ENCRYPTION_KEY: KEY,
       }),
     ),
@@ -54,7 +59,9 @@ function appWithHostDispatcher(
       const text = await tool.execute(args);
       return { text, isError: false };
     },
-  );
+  ];
+  dependencies[9] = callbackProfiles(TOKEN, "bot-a");
+  return createApp(...dependencies);
 }
 
 describe("host access tools on the signed agent callback route", () => {
@@ -74,7 +81,7 @@ describe("host access tools on the signed agent callback route", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-openbot-agent-token": "legacy-agent-tool-token",
+        "x-openbot-agent-token": TOKEN,
       },
       body: JSON.stringify({
         name: "host_read_file",

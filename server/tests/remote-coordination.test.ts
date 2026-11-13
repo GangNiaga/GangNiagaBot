@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  mintCallbackToken,
   mintRunAssertion,
   type RunAssertion,
 } from "../src/agents/callback-token";
@@ -11,10 +12,11 @@ import {
 import { createApp, type DeploymentToolCaller } from "../src/app";
 import type { AuditStore } from "../src/audit";
 import { loadConfig } from "../src/config";
+import { callbackProfiles } from "./support/callback-profiles";
 import { testEnvironment } from "./support/environment";
 
 const KEY = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
-const TOKEN = "remote-coordination-test-token";
+const TOKEN = mintCallbackToken();
 const RUN: RunAssertion = {
   botId: "remote-researcher",
   actorId: "person-1",
@@ -30,6 +32,7 @@ function callbackApp(caller: DeploymentToolCaller) {
       testEnvironment({ AGENT_TOOL_TOKEN: TOKEN, KEY_ENCRYPTION_KEY: KEY }),
     ),
   ];
+  parameters[9] = callbackProfiles(TOKEN, RUN.botId);
   parameters[28] = caller;
   return createApp(...parameters);
 }

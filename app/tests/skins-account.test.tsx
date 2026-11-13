@@ -253,9 +253,10 @@ test("the account's skin wins over a different one this browser cached", async (
   expect(sent).toEqual([]);
 });
 
-test("signing out forgets the cached skin, so the next person starts from the default", async () => {
+test("signing out forgets the cached skin and all cached account data, so the next person starts clean", async () => {
   signedIn();
   setSkin("openduet");
+  queryClient.setQueryData(["channels", "list"], [{ id: "private-channel" }]);
   expect(cachedSkin()).toBe("openduet");
   serve("POST /api/auth/sign-out", { success: true });
 
@@ -269,6 +270,7 @@ test("signing out forgets the cached skin, so the next person starts from the de
   expect(document.documentElement.dataset.skin).toBeUndefined();
   expect(getSkinId()).toBe("openbot");
   expect(queryClient.getQueryData(authKeys.currentUser())).toBeUndefined();
+  expect(queryClient.getQueryData(["channels", "list"])).toBeUndefined();
 });
 
 test("a sign-out the server refused keeps the skin", async () => {

@@ -485,6 +485,7 @@ export type DeploymentConfig = {
    * Absent means no Bot may call tools back, and a deployment that wanted them gets a refusal rather
    * than an open door.
    */
+  /** @deprecated Static callback secrets are no longer accepted. */
   agentToolToken?: string;
   /**
    * The secret the worker presents when it hands a routine run back to this server.
@@ -599,6 +600,108 @@ function keyEncryptionKey(environment: Environment): string {
   }
 
   return value;
+}
+
+/**
+ * The secrets this repository publishes, by the variable that carries them.
+ *
+ * Every clone of this repository knows them, because they are written down in `docker-compose.yml`,
+ * in `scripts/start.sh` and in the Desktop's own replacement list. A deployment that reaches past this
+ * machine with one of them has no secret at all: anybody can read the value and present it.
+ *
+ * The database's own credential is here for the same reason and is the one that is easiest to forget,
+ * because it arrives as part of a connection string rather than as a variable of its own.
+ */
+const PUBLISHED_DEV_SECRETS: Record<string, string> = {
+  COMPUTER_TOKEN: "openbot-dev-computer-token",
+  SUPERVISOR_TOKEN: "openbot-dev-supervisor-token",
+  WORKER_SHARED_SECRET: "openbot-dev-worker-secret",
+};
+
+/**
+ * The password `docker-compose.yml` gives PostgreSQL by default, which is therefore public.
+ *
+ * Read out of the connection string rather than compared against it, because the string carries the
+ * host and the database name as well, and only the password is the secret.
+ */
+const PUBLISHED_DATABASE_PASSWORD = "openbot";
+
+/**
+ * Whether this deployment still carries a secret anybody can read, refused at boot.
+ *
+ * The question this asks is the same one `singleUserAllowed` asks, and it is asked here for the same
+ * reason: the deployment's own settings say who can reach it, and a published secret protects
+ * nothing once somebody else can reach the thing it protects.
+ *
+ * TWO THINGS HAVE TO BE TRUE, and both are needed:
+ *
+ *   1. the secret is still the published one — unset is not a published secret, and a deployment that
+ *      set its own value is not what this is about;
+ *   2. somebody other than the person at this machine can reach the deployment — either because it
+ *      runs as production (which is what every container image says, including the chart's own local
+ *      trial, and why the container is not the signal on its own) or because it names an address
+ *      beyond this machine.
+ *
+ * A deployment only this machine can reach keeps the published defaults, because there is nobody to
+ * use them: `scripts/start.sh` and `docker compose up` on a laptop are the case this exists to leave
+ * working. A deployment on a LAN, behind a tunnel, or in a container is the case it exists to stop,
+ * and the refusal names the variables and how to replace them.
+ */
+/**
+ * Whether the database host in a DATABASE_URL is reachable beyond this machine.
+ *
+ * The published database password only matters if someone else can reach the database.
+ * A loopback database (localhost, 127.0.0.1, ::1) is only reachable from this machine,
+ * so the published password is not exposed there.
+ */
+function databaseBeyondThisMachine(databaseUrl: string): boolean {
+  try {
+    return !isLoopbackHost(new URL(databaseUrl).hostname);
+  } catch {
+    return true;
+  }
+}
+
+function refusePublishedSecrets(environment: Environment): void {
+  const published = Object.entries(PUBLISHED_DEV_SECRETS).filter(
+    ([name, value]) => optional(environment, name) === value,
+  );
+  const databaseUrl = optional(environment, "DATABASE_URL");
+  if (databaseUrl) {
+    try {
+      if (
+        new URL(databaseUrl).password === PUBLISHED_DATABASE_PASSWORD &&
+        databaseBeyondThisMachine(databaseUrl)
+      ) {
+        published.push(["DATABASE_URL", PUBLISHED_DATABASE_PASSWORD]);
+      }
+    } catch {
+      // A connection string that does not parse is the database client's refusal, not this one's.
+    }
+  }
+  if (published.length === 0) return;
+
+  const beyond = addressesBeyondThisMachine(environment);
+  if (!isProduction(environment) && beyond.length === 0) return;
+
+  const names = published.map(([name]) => name).join(", ");
+  const hints = published.map(([name]) => {
+    switch (name) {
+      case "DATABASE_URL":
+        return "DATABASE_URL (set the password in DATABASE_URL; for docker compose, set POSTGRES_PASSWORD instead and use a URL-safe value e.g. openssl rand -hex 32)";
+      case "COMPUTER_TOKEN":
+        return "COMPUTER_TOKEN (set a value only this deployment knows: openssl rand -hex 32)";
+      case "SUPERVISOR_TOKEN":
+        return "SUPERVISOR_TOKEN (set a value only this deployment knows: openssl rand -hex 32)";
+      case "WORKER_SHARED_SECRET":
+        return "WORKER_SHARED_SECRET (set a value only this deployment knows: openssl rand -hex 32)";
+      default:
+        return name;
+    }
+  });
+  throw new Error(
+    `${names} ${published.length === 1 ? "is" : "are"} still the development secret published in this repository, which anybody can read, and this deployment ${isProduction(environment) ? "runs as production" : `is reached at ${beyond.join(", ")}, beyond this machine`}. ${hints.join("; ")}`,
+  );
 }
 
 /**
@@ -1713,11 +1816,16 @@ export function loadConfig(
     computer: computerConfig(environment),
     ...browserConfig(environment),
     handoff: handoffCaps(environment),
-    ...(optional(environment, "AGENT_TOOL_TOKEN")
-      ? { agentToolToken: optional(environment, "AGENT_TOOL_TOKEN") as string }
-      : {}),
+
     ...(workerSharedSecret ? { workerSharedSecret } : {}),
   };
+  /*
+   * After the rest, so a deployment missing something more basic is told that first. The published
+   * secrets are a deployment that is otherwise complete and reachable, which is exactly the shape a
+   * reader has to be told about before they go looking for the address that made it reachable.
+   */
+  refusePublishedSecrets(environment);
+
   // Read once the rest has been, so a deployment missing something more basic is told that first.
   const config: DeploymentConfig = {
     ...loaded,

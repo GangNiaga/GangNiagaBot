@@ -6,6 +6,7 @@ import AgentOrb from "@/components/agents/orb/agent-orb";
 import { ProviderLogo } from "@/components/auth/provider-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import {
   providerName,
@@ -231,8 +232,13 @@ function SignScreen() {
                   <Separator className="flex-1" />
                 </div>
               ) : null}
+              <Label className="mb-2" htmlFor="company-email">
+                Company email
+              </Label>
               <Input
                 autoComplete="email"
+                id="company-email"
+                inputMode="email"
                 onChange={(event) => setEmail(event.target.value)}
                 placeholder="you@company.com"
                 required

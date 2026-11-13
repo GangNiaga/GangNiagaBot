@@ -19,7 +19,7 @@
  */
 
 import { isPersonBrowserId } from "@openbot/shared/openbot-browser";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import postgres from "postgres";
 import {
   type AuditStore,
@@ -156,6 +156,9 @@ export type EnterpriseControls = {
    * replay of a candidate policy (admin/network-replay.ts). Undefined until the controls have read
    * their settings.
    */
+  networkMembersFor?: (
+    botIds: readonly string[],
+  ) => Promise<Map<string, { member: Member; cloudNetwork: boolean }>>;
   networkMemberFor: (
     botId: string,
   ) => Promise<{ member: Member; cloudNetwork: boolean } | undefined>;
@@ -528,25 +531,35 @@ export async function installEnterpriseControls(
       ),
     );
 
+  const networkMembersFor = async (botIds: readonly string[]) => {
+    const result = new Map<string, { member: Member; cloudNetwork: boolean }>();
+    const current = snapshot;
+    const ids = [...new Set(botIds)];
+    if (!current || !ids.length) return result;
+    const profiles = await deps.database
+      .select({ id: agentProfiles.agentId, owner: agentProfiles.ownerUserId })
+      .from(agentProfiles)
+      .where(inArray(agentProfiles.agentId, ids));
+    const members = await store.members(
+      profiles.flatMap((p) => (p.owner ? [p.owner] : [])),
+    );
+    const owners = new Map(profiles.map((p) => [p.id, p.owner]));
+    for (const id of ids) {
+      const owner = owners.get(id);
+      const member: Member = owner
+        ? (members.get(owner) ?? { role: "user", groups: [] })
+        : { role: "user", groups: [] };
+      result.set(id, {
+        member,
+        cloudNetwork: resolveCapability(current.rows, member, "cloudNetwork")
+          .allowed,
+      });
+    }
+    return result;
+  };
   const networkMemberFor: EnterpriseControls["networkMemberFor"] = async (
     botId,
-  ) => {
-    const current = snapshot;
-    if (!current) return undefined;
-    const [profile] = await deps.database
-      .select({ owner: agentProfiles.ownerUserId })
-      .from(agentProfiles)
-      .where(eq(agentProfiles.agentId, botId))
-      .limit(1);
-    const member: Member = profile?.owner
-      ? await store.member(profile.owner)
-      : { role: "user", groups: [] };
-    return {
-      member,
-      cloudNetwork: resolveCapability(current.rows, member, "cloudNetwork")
-        .allowed,
-    };
-  };
+  ) => (await networkMembersFor([botId])).get(botId);
 
   const policyForBot = async (botId: string): Promise<EgressPolicy> => {
     // A person's own browser has no Bot and no owner to read a policy for, and the organization's is for Bots.
@@ -795,6 +808,7 @@ export async function installEnterpriseControls(
     pushNetworkPolicies,
     policyForBot,
     networkMemberFor,
+    networkMembersFor,
     offboard,
     stop: async () => {
       for (const timer of timers) clearInterval(timer);

@@ -1452,3 +1452,102 @@ describe("edition", () => {
     expect(() => loadConfig(environment)).toThrow("AGENT_COMPUTER_URL");
   });
 });
+
+/**
+ * The published-secrets gate: a deployment reached beyond this machine (or running as production)
+ * must not carry the repo's published development secrets. Each refusal names the variable and
+ * how to replace it.
+ */
+describe("published secrets gate", () => {
+  const loopbackDb = "postgres://openbot:openbot@localhost:5432/openbot";
+  const remoteDb = "postgres://openbot:openbot@db.example.com:5432/openbot";
+  const customDb = "postgres://openbot:custom-password@db.example.com:5432/openbot";
+
+  // Helper that builds a production-like env with a custom DB URL
+  function productionEnv(dbUrl: string) {
+    return {
+      ...baseEnvironment,
+      NODE_ENV: "production",
+      KEY_ENCRYPTION_KEY: productionEnvironment.KEY_ENCRYPTION_KEY,
+      DATABASE_URL: dbUrl,
+    };
+  }
+
+  test("refuses published COMPUTER_TOKEN in production", () => {
+    expect(() =>
+      loadConfig({
+        ...productionEnv(loopbackDb),
+        COMPUTER_TOKEN: "openbot-dev-computer-token",
+      }),
+    ).toThrow("COMPUTER_TOKEN");
+  });
+
+  test("refuses published SUPERVISOR_TOKEN beyond this machine", () => {
+    expect(() =>
+      loadConfig({
+        ...baseEnvironment,
+        SUPERVISOR_TOKEN: "openbot-dev-supervisor-token",
+        OPENBOT_PUBLIC_URL: "https://openbot.example.com",
+      }),
+    ).toThrow("SUPERVISOR_TOKEN");
+  });
+
+  test("refuses published WORKER_SHARED_SECRET beyond this machine", () => {
+    expect(() =>
+      loadConfig({
+        ...baseEnvironment,
+        WORKER_SHARED_SECRET: "openbot-dev-worker-secret",
+        TRUSTED_ORIGINS: "https://openbot.example.com",
+      }),
+    ).toThrow("WORKER_SHARED_SECRET");
+  });
+
+  test("refuses published DATABASE_URL password when DB host is beyond this machine", () => {
+    expect(() =>
+      loadConfig(productionEnv(remoteDb)),
+    ).toThrow("DATABASE_URL");
+  });
+
+  test("allows published DATABASE_URL password when DB host is loopback", () => {
+    expect(() =>
+      loadConfig(productionEnv(loopbackDb)),
+    ).not.toThrow();
+  });
+
+  test("allows custom DATABASE_URL password when DB host is beyond this machine", () => {
+    expect(() =>
+      loadConfig(productionEnv(customDb)),
+    ).not.toThrow();
+  });
+
+  test("refusal message names the variable and suggests openssl rand -hex 32", () => {
+    try {
+      loadConfig({
+        ...baseEnvironment,
+        COMPUTER_TOKEN: "openbot-dev-computer-token",
+        OPENBOT_PUBLIC_URL: "https://openbot.example.com",
+      });
+      throw new Error("expected to throw");
+    } catch (e: unknown) {
+      if (!(e instanceof Error)) throw e;
+      expect(e.message).toContain("COMPUTER_TOKEN");
+      expect(e.message).toContain("openssl rand -hex 32");
+    }
+  });
+
+  test("refusal message for DATABASE_URL mentions POSTGRES_PASSWORD for docker compose", () => {
+    try {
+      loadConfig({
+        ...productionEnv(remoteDb),
+        COMPUTER_TOKEN: "custom-token",
+        SUPERVISOR_TOKEN: "custom-supervisor",
+        WORKER_SHARED_SECRET: "custom-worker",
+      });
+      throw new Error("expected to throw");
+    } catch (e: unknown) {
+      if (!(e instanceof Error)) throw e;
+      expect(e.message).toContain("DATABASE_URL");
+      expect(e.message).toContain("POSTGRES_PASSWORD");
+    }
+  });
+});

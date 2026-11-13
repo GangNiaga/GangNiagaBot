@@ -265,6 +265,33 @@ export function createEnterpriseStore(database: Database) {
       });
     },
 
+    async members(userIds: readonly string[]): Promise<Map<string, Member>> {
+      const ids = [...new Set(userIds)];
+      if (!ids.length) return new Map();
+      // Keep statements sequential: a transaction may own only one connection.
+      const roles = await database
+        .select({ userId: userRoles.userId, role: userRoles.role })
+        .from(userRoles)
+        .where(inArray(userRoles.userId, ids));
+      const people = await database
+        .select({ id: users.id, groups: users.groups })
+        .from(users)
+        .where(inArray(users.id, ids));
+      const admins = new Set(
+        roles.filter((r) => r.role === "admin").map((r) => r.userId),
+      );
+      const groups = new Map(people.map((p) => [p.id, p.groups]));
+      return new Map(
+        ids.map((id) => [
+          id,
+          {
+            role: admins.has(id) ? "admin" : "user",
+            groups: groups.get(id) ?? [],
+          },
+        ]),
+      );
+    },
+
     /** One person as the capability rules see them. Unknown means a plain user in no group. */
     async member(userId: string): Promise<Member> {
       const roles = await database

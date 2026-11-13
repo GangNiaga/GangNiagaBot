@@ -820,7 +820,8 @@ test("tells the shared computer which edition it runs in", () => {
 test("gives the selected harness the same governed callback as the framework Bot", () => {
   const config = runComposeConfig({
     OPENBOT_TOOL_URL: "http://callback.example/api/agent-tools/call",
-    AGENT_TOOL_TOKEN: "synthetic-callback-token",
+    HARNESS_CALLBACK_TOKEN: "synthetic-callback-token",
+    LANGGRAPH_CALLBACK_TOKEN: "synthetic-callback-token",
   });
   for (const service of ["agent-harness", "agent-langgraph"] as const) {
     expect(config.services[service].environment).toMatchObject({
@@ -907,7 +908,9 @@ test("gives the server container addresses, not the host's loopback", () => {
   expect(environment).toMatchObject({
     PORT: "3001",
     SERVER_PORT: "3001",
-    DATABASE_URL: "postgres://openbot:openbot@postgres:5432/openbot",
+    DATABASE_URL:
+      // biome-ignore lint/suspicious/noTemplateCurlyInString: Compose interpolation must stay literal.
+      "postgres://openbot:${POSTGRES_PASSWORD:-openbot}@postgres:5432/openbot",
     AGENT_COMPUTER_URL: "http://agent-computer:4100",
   });
   for (const [name, value] of Object.entries(environment)) {
@@ -945,6 +948,29 @@ test("puts the server beside the database and the Bots, and the worker beside th
   ]);
   expect(services.worker.environment?.SERVER_INTERNAL_URL).toBe(
     "http://server:3001",
+  );
+});
+
+/**
+ * The database connection string must derive from POSTGRES_PASSWORD so the operator can
+ * set one password in .env and have both the postgres service and all DATABASE_URLs agree.
+ * URL-encoding is not supported by compose interpolation; use a URL-safe password
+ * (e.g. `openssl rand -hex 32`).
+ */
+test("all DATABASE_URLs derive from the same POSTGRES_PASSWORD", () => {
+  const services = composeServices();
+  const expectedUrl =
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: Compose interpolation must stay literal.
+    "postgres://openbot:${POSTGRES_PASSWORD:-openbot}@postgres:5432/openbot";
+
+  expect(services.migrate.environment?.DATABASE_URL).toBe(expectedUrl);
+  expect(services.server.environment?.DATABASE_URL).toBe(expectedUrl);
+  expect(services.worker.environment?.DATABASE_URL).toBe(expectedUrl);
+
+  // Also verify postgres service uses the same variable for its password
+  expect(services.postgres.environment?.POSTGRES_PASSWORD).toBe(
+    // biome-ignore lint/suspicious/noTemplateCurlyInString: Compose interpolation must stay literal.
+    "${POSTGRES_PASSWORD:-openbot}",
   );
 });
 

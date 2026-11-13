@@ -10,7 +10,10 @@ import { connect } from "node:net";
 import { networkInterfaces } from "node:os";
 import { RECORDER_EXTENSION_ID } from "@openbot/shared/recorder-extension";
 import { createActorAgentResolver } from "../src/agents/agent-resolver";
-import { mintRunAssertion } from "../src/agents/callback-token";
+import {
+  mintCallbackToken,
+  mintRunAssertion,
+} from "../src/agents/callback-token";
 import { createApp } from "../src/app";
 import { createChannelEventHub } from "../src/channels/events";
 import type { ChannelStore } from "../src/channels/routes";
@@ -21,6 +24,7 @@ import { mountCopilotRuntime } from "../src/copilot";
 import { startHttpServer } from "../src/http-server";
 import { createRequestActor } from "../src/request-actor";
 import type { RoutineRunner } from "../src/routines/runner";
+import { callbackProfiles } from "./support/callback-profiles";
 import { testEnvironment } from "./support/environment";
 
 /*
@@ -35,7 +39,7 @@ import { testEnvironment } from "./support/environment";
  * same-origin with it.
  */
 
-const AGENT_TOOL_TOKEN = "request-trust-agent-tool-token";
+const AGENT_TOOL_TOKEN = mintCallbackToken();
 const WORKER_SECRET = "request-trust-worker-secret";
 const EVIL = "https://evil.example";
 const APP_ORIGIN = "http://127.0.0.1:3010";
@@ -148,6 +152,7 @@ async function boot(
     typeof createApp
   >;
   args[0] = config;
+  args[9] = callbackProfiles(AGENT_TOOL_TOKEN, "general-assistant");
   args[6] = runtime.handler;
   args[7] = gateway;
   args[10] = {} as ChannelStore;

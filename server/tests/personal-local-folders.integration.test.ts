@@ -14,7 +14,10 @@ import {
   installEnterpriseControls,
 } from "../src/admin/controls";
 import { createEnterpriseGate } from "../src/admin/gate";
-import { mintRunAssertion } from "../src/agents/callback-token";
+import {
+  mintCallbackToken,
+  mintRunAssertion,
+} from "../src/agents/callback-token";
 import { createApp } from "../src/app";
 import { createAuditStore } from "../src/audit";
 import type { AppVariables } from "../src/auth/guards";
@@ -31,6 +34,7 @@ import {
 } from "../src/host-access/routes";
 import { hostAccessTools } from "../src/host-access/tools";
 import { REFUSAL_MARKER } from "../src/plugins/tools";
+import { callbackProfiles } from "./support/callback-profiles";
 import { TEST_POOL, testDatabaseUrl } from "./support/database";
 import { testEnvironment } from "./support/environment";
 
@@ -106,12 +110,14 @@ function folderRoutes(
   return app;
 }
 
+const CALLBACK_TOKEN = mintCallbackToken();
+
 /** The signed callback a Bot's tool call arrives on, dispatching `host_*` as `index.ts` does. */
 function callbackApp(broker: ReturnType<typeof createHostAccessBroker>) {
-  return createApp(
+  const dependencies: Parameters<typeof createApp> = [
     loadConfig(
       testEnvironment({
-        AGENT_TOOL_TOKEN: "legacy-agent-tool-token",
+        AGENT_TOOL_TOKEN: CALLBACK_TOKEN,
         KEY_ENCRYPTION_KEY: KEY,
       }),
     ),
@@ -155,7 +161,9 @@ function callbackApp(broker: ReturnType<typeof createHostAccessBroker>) {
       const text = await tool.execute(args);
       return { text, isError: text.startsWith(REFUSAL_MARKER) };
     },
-  );
+  ];
+  dependencies[9] = callbackProfiles(CALLBACK_TOKEN, bot);
+  return createApp(...dependencies);
 }
 
 /** What the desktop's worker does: poll until the server hands it an operation. */
@@ -220,7 +228,7 @@ describe("the personal edition with OpenBot Desktop", () => {
       method: "POST",
       headers: {
         "content-type": "application/json",
-        "x-openbot-agent-token": "legacy-agent-tool-token",
+        "x-openbot-agent-token": CALLBACK_TOKEN,
       },
       body: JSON.stringify({
         name: "host_read_file",

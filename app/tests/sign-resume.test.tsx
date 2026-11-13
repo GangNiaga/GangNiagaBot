@@ -209,10 +209,11 @@ test("the company-account form gets the resume URL as its callbackURL", async ()
     sso: true,
     ssoRequired: false,
   });
-  await user.type(
-    await view.findByPlaceholderText("you@company.com"),
-    "someone@company.com",
-  );
+  const email = await view.findByLabelText("Company email");
+  expect(email.getAttribute("type")).toBe("email");
+  expect(email.getAttribute("autocomplete")).toBe("email");
+  expect(email.getAttribute("inputmode")).toBe("email");
+  await user.type(email, "someone@company.com");
   await user.click(await view.findByText(/Continue with your company account/));
   await waitFor(() => expect(asked).toHaveLength(1));
   expect(asked[0]).toBe(`${window.location.origin}${RESUME_URL}`);

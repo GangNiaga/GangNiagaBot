@@ -40,7 +40,7 @@
 
 - **Pengasingan Komputer & Kotak Pasir Selamat**: Setiap pengguna dan ejen beroperasi dalam persekitaran kontena Docker / Podman yang terasing dengan kawalan dasar CEL (_Common Expression Language_).
 - **Interaksi Multimodal & Pemerhatian Langsung**: Pengguna boleh memantau skrin pelayar ejen secara masa nyata (_real-time screen casting_), mengambil alih kawalan input bila perlu (_human-in-the-loop takeover_), dan meluluskan tindakan kritikal secara berpusat.
-- **Lejar Pembayaran B2B Berbilang Saluran**: Pengurusan transaksi kewangan terbina dalam menggunakan Stripe Billing & Invoicing, DuitNow QR (standard EMVCo Malaysia), dan perbankan FPX dengan penguatkuasaan keselamatan peringkat baris (_Row-Level Security_).
+- **Lejar Pembayaran B2B**: Stripe billing adapter dalam PILOTKIT dan schema lejar dengan RLS dalam repo ini. DuitNow/FPX ialah gateway identifiers dalam schema; integrasi bank dan kutipan live belum dibuktikan.
 - **Pengurusan Akses Perusahaan (IAM)**: Integrasi Better Auth menyokong Google Workspace, Microsoft Entra ID (OIDC/OAuth2), Okta, serta SAML korporat berasaskan domain emel.
 
 ---
@@ -69,8 +69,8 @@ flowchart TB
     end
 
     subgraph DatabaseLayer["Pangkalan Data & Memori Berterusan"]
-        SupabasePG["Supabase PostgreSQL 17\n(90 Migrasi Drizzle + pgvector)"]
-        RLSLedger["Lejar Pembayaran Selamat\n(payment_transactions & payment_events\nRow-Level Security: Active)"]
+        SupabasePG["Supabase PostgreSQL 17\n(Migrasi Drizzle + pgvector)"]
+        RLSLedger["Lejar Pembayaran Selamat\n(payment_transactions & payment_events\nRLS dalam migrasi; semak deployment)"]
     end
 
     subgraph PaymentLayer["Gerbang Pembayaran & Perbankan B2B"]
@@ -94,8 +94,8 @@ flowchart TB
     Server -->|"Drizzle ORM (Pooler)"| SupabasePG
     SupabasePG --> RLSLedger
     Server -->|"Stripe SDK & Webhook"| StripeGateway
-    Server -->|"Invois & Kod QR"| DuitNowQR
-    Server -->|"Penyelesaian Transaksi"| FPXGateway
+    Server -.->|"Integrasi perlu dibuktikan"| DuitNowQR
+    Server -.->|"Integrasi perlu dibuktikan"| FPXGateway
     Server -->|"AG-UI Protocol"| LLMs
 ```
 
@@ -109,7 +109,7 @@ Repositori ini distrukturkan sebagai monorepo modular berasaskan ruang kerja (_B
 | :---------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **`app/`**                    | Aplikasi frontend berasaskan **React 19**, **Vite**, **TanStack Router**, **Tailwind CSS**, dan komponen UI Radix. Menyediakan antaramuka sembang, pemantauan komputer masa nyata, katalog ejen, dan panel pentadbir.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | **`server/`**                 | Pelayan backend teras berasaskan **Bun** dan kerangka kerja **Hono**. Mengendalikan laluan API REST, autentikasi Better Auth, ejen CopilotKit runtime, dasar tindakan CEL, pengauditan, dan lejar transaksi.                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| **`server/drizzle/`**         | Koleksi **90 fail migrasi SQL** rasmi (`0000_...` hingga `0089_payment_transactions.sql`) berserta metadata schema Drizzle (`meta/_journal.json`) untuk sinkronisasi pangkalan data PostgreSQL.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **`server/drizzle/`**         | Koleksi migrasi SQL rasmi (`0000_...` hingga `0090_payment_hardening.sql`) berserta metadata schema Drizzle (`meta/_journal.json`) untuk sinkronisasi pangkalan data PostgreSQL.                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | **`packages/` & Modul Teras** | Pakej sokongan dalam monorepo:<ul><li>`shared/`: Definisi jenis data TypeScript kongsi, skema pengesahan Zod, dan utiliti rentas platform.</li><li>`toolkit/`: Pustaka teras ejen AG-UI bebas-kerangka kerja dan adapter CopilotKit.</li><li>`worker/`: Proses pekerja latar belakang untuk rutin berjadual (_scheduled routines worker_).</li><li>`agent-computer/`: Perkhidmatan kotak pasir automasi pelayar Chromium dan manipulasi fail.</li><li>`supervisor/`: Daemon pengurus kontena kotak pasir yang berkomunikasi dengan soket enjin kontena.</li><li>`extension/`: Sambungan pelayar untuk integrasi aliran kerja web terus ke GangNiagaBot.</li></ul> |
 | **`examples/`**               | Templat ejen bersedia guna dan spesifikasi perniagaan (contohnya katalog perbankan/fintech YAML di `examples/fintech/`).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | **`.github/workflows/`**      | Konfigurasi saluran CI/CD GitHub Actions merangkumi `ci.yml` (gerbang pengujian menyeluruh), `security_zizmor.yml`, `release.yml`, dan binaan desktop lintas-platform.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -174,7 +174,7 @@ OPENAI_API_KEY=your_openai_or_compatible_api_key
 COMPUTER_SUPERVISOR_URL=http://127.0.0.1:4500
 COMPUTER_TOKEN=dev_computer_token_replace_in_production
 SUPERVISOR_TOKEN=dev_supervisor_token_replace_in_production
-AGENT_TOOL_TOKEN=dev_tool_token_replace_in_production
+# Callback tokens are provisioned per agent; legacy AGENT_TOOL_TOKEN is retired.
 
 # --- Gerbang Pembayaran Stripe & Perbankan Malaysia ---
 STRIPE_SECRET_KEY=sk_test_replace_with_test_or_live_key
@@ -237,82 +237,21 @@ bun test
 
 ## 💳 Modul Pembayaran & Lejar B2B
 
-GangNiagaBot menyertakan lejar kewangan bertaraf perusahaan yang diperkenalkan melalui migrasi **`0089_payment_transactions.sql`** dan model TypeScript **`server/src/db/schema/payment.ts`**.
+Migrasi `0089_payment_transactions.sql` mencipta lejar; `0090_payment_hardening.sql` menguatkan constraints, RLS dan transition trigger. Amaun Stripe disimpan sebagai integer sen (amount_unit minor), dengan currency `MYR`, `USD`, `SGD`, `EUR` atau `GBP`. Status kanonikal: `pending`, `processing`, `paid`, `failed`, `expired`, `refunded`.
 
-### Skema & Integriti Data Supabase
+Pasangan `(gateway, gateway_txn_id)` dan `idempotency_key` unik melindungi transaksi. Event webhook unik mengikut `(gateway, gateway_event_id)`. Percubaan kutipan invois yang gagal boleh menjadi `paid`; event gagal yang lewat tidak menurunkan transaksi yang sudah `paid` atau `refunded`. Checkout untuk subscription/invoice direkod sebagai event sahaja; invoice menjadi rekod wang kanonikal.
 
-Pangkalan data awan Supabase PostgreSQL 17 (`wmuxfyymcgapqcyznltp`) dikonfigurasi dengan lapisan keselamatan ketat:
+Jalankan semua migrasi melalui migrator rasmi. Release policy menyasarkan `0090_payment_hardening`, memerlukan downtime dan recovery melalui restore-backup; jangan anggap downgrade schema selamat. Ujian PGlite setempat mengesahkan chain 0089 → 0090 dan reapplication, bukan bukti migrasi production telah dijalankan.
 
-1. **Row-Level Security (RLS)**: Diaktifkan secara mutlak (`relrowsecurity = true`) ke atas jadual:
-   - `payment_transactions` (dikawal selia oleh polisi lejar `service_role_manage_payment_transactions` untuk peranan `service_role` & `postgres`)
-   - `payment_events` (dikawal selia oleh polisi audit webhook `service_role_manage_payment_events` untuk peranan `service_role` & `postgres`)
-2. **Kekangan Integriti (CHECK Constraints)**:
-   - **Kuantiti Amaun Positif**: `CHECK (amount > 0)` — Menghalang ralat caj negatif atau nilai sifar.
-   - **Senarai Gerbang Sah**: `CHECK (gateway IN ('duitnow_qr', 'fpx', 'stripe', 'manual'))`
-   - **Kitaran Status Transaksi Sah**: `CHECK (status IN ('pending', 'processing', 'succeeded', 'paid', 'failed', 'expired', 'refunded'))`
-3. **Pencegahan Pembayaran Berganda (Idempotency)**:
-   - Indeks unik pada `payment_transactions(gateway_txn_id)` memastikan transaksi pembekal luaran hanya direkodkan sekali sahaja.
-   - Indeks unik pada `payment_events(gateway, gateway_event_id)` menghalang pemprosesan semula peristiwa webhook yang serupa.
-4. **Pemicu Masa Nyata (Trigger)**: `trg_payment_transactions_updated_at` (sebelum operasi `UPDATE`) mengemas kini cap masa `updated_at` secara automatik melalui fungsi `public.set_updated_at()`.
+Stripe catalog dalam PILOTKIT mentakrifkan pelan; kewujudan produk Stripe dan entitlement sebenar mesti disahkan berasingan. Enum DuitNow/FPX dalam schema tidak membuktikan integrasi gateway itu aktif.
 
-```sql
--- Struktur Jadual Lejar & Peristiwa (server/drizzle/0089_payment_transactions.sql)
-CREATE TABLE IF NOT EXISTS "payment_transactions" (
-    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    "company_id" text,
-    "gateway" text NOT NULL,
-    "gateway_txn_id" text,
-    "amount" bigint NOT NULL,
-    "currency" text DEFAULT 'MYR',
-    "status" text DEFAULT 'pending' NOT NULL,
-    "qr_code_url" text,
-    "qr_code_data" text,
-    "customer_email" text,
-    "customer_name" text,
-    "metadata" jsonb DEFAULT '{}'::jsonb,
-    "expired_at" timestamp with time zone,
-    "paid_at" timestamp with time zone,
-    "created_at" timestamp with time zone DEFAULT now(),
-    "updated_at" timestamp with time zone DEFAULT now()
-);
+## Diagnostik dan keselamatan API
 
-CREATE TABLE IF NOT EXISTS "payment_events" (
-    "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-    "transaction_id" uuid REFERENCES "public"."payment_transactions"("id") ON DELETE CASCADE,
-    "gateway" text NOT NULL,
-    "gateway_event_id" text,
-    "event_type" text NOT NULL,
-    "payload" jsonb DEFAULT '{}'::jsonb,
-    "received_at" timestamp with time zone DEFAULT now()
-);
+`GET /health` ialah liveness. `GET /api/health` memerlukan sesi dan melaporkan probe role database serta konfigurasi services. `GET /api/tools?botId=<id>` memerlukan akses kepada Bot dan menyenaraikan actual runtime tools (memory, host access, follow-ups, app integrations), bersama governed computer tools yang pengguna boleh akses. Tambah `threadId` untuk coordination/subagent tools yang sah dalam perbualan itu. Tool schemas tidak melangkaui runtime policy atau approval.
 
--- Kawalan Keselamatan Baris & Polisi (RLS)
-ALTER TABLE "payment_transactions" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "payment_events" ENABLE ROW LEVEL SECURITY;
+API menggunakan bounded rate limiter dalam proses (300 request/minute bagi trusted connection address). Reverse proxy mesti memberi connection metadata yang dipercayai; header `X-Forwarded-For` daripada client tidak menentukan budget. Multi-instance production memerlukan kawalan rate limit bersama di ingress. Unexpected errors memulangkan request ID tanpa stack kepada client.
 
-CREATE POLICY "service_role_manage_payment_transactions" ON "payment_transactions"
-    FOR ALL TO service_role, postgres USING (true) WITH CHECK (true);
-
-CREATE POLICY "service_role_manage_payment_events" ON "payment_events"
-    FOR ALL TO service_role, postgres USING (true) WITH CHECK (true);
-```
-
-### Pelan Langganan Enterprise gangniaga.my
-
-Sistem langganan B2B dihubungkan terus dengan produk berdaftar Stripe:
-
-| Kod Pelan               | Nama Pelan                | Harga (MYR)                           | Terma Pengebilan          | Faedah Tambahan                                                                             |
-| :---------------------- | :------------------------ | :------------------------------------ | :------------------------ | :------------------------------------------------------------------------------------------ |
-| `gangniaga_b2b_monthly` | **GangNiaga B2B Monthly** | **RM 299.00 / bln** _(29,900 sen)_    | Bulanan (Billed monthly)  | Akses penuh ejen berautonomi, 5 komputer kotak pasir serentak, sokongan tiket pantas.       |
-| `gangniaga_b2b_annual`  | **GangNiaga B2B Annual**  | **RM 2,990.00 / thn** _(299,000 sen)_ | Tahunan (Billed annually) | **Percuma 2 bulan penjimatan**, 15 komputer kotak pasir, pengurus akaun khusus & SLA 99.9%. |
-
-### Saluran Pembayaran Tempatan & Global
-
-- **Stripe Billing & Invoicing**: Sokongan kad kredit/debit antarabangsa, invois korporat berjadual (terma pembayaran Net 14), dan Customer Billing Portal layan diri.
-- **DuitNow QR Malaysia**: Penjanaan kod QR standard EMVCo kebangsaan membolehkan pembayaran mudah alih segera daripada mana-mana aplikasi perbankan atau e-dompet tempatan (Maybank MAE, CIMB OCTO, Touch 'n Go eWallet, Boost).
-- **FPX Online Banking**: Pembayaran terus antara akaun bank komersial dan runcit di Malaysia.
-
----
+Callback tools memerlukan token berdaftar mengikut agent dan signed run assertions. `AGENT_TOOL_TOKEN` static callback secret telah dibuang sepenuhnya; gunakan per-agent callback tokens melalui lifecycle agent (`/api/agent-lifecycle`).
 
 ## 🛡️ Kualiti Kod & Aliran Kerja CI/CD
 

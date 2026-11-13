@@ -16,7 +16,10 @@ services:
     environment:
       POSTGRES_DB: openbot
       POSTGRES_USER: openbot
-      POSTGRES_PASSWORD: openbot
+      # Settable, so a deployment does not have to edit this file to keep the database's own
+      # credential out of a public repository. The default is the local development one, and the
+      # server's own connection string below names the same variable, so the two can never disagree.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-openbot}
     ports:
       # Loopback, like every other port in this file, and for the reason the network split above
       # exists. Published on every interface, this is reachable from the Bot's computer at the
@@ -72,7 +75,10 @@ services:
     # therefore one of the places that happens.
     command: ["bun", "scripts/migrate.ts"]
     environment:
-      DATABASE_URL: postgres://openbot:openbot@postgres:5432/openbot
+      # The database password comes from POSTGRES_PASSWORD (compose reads .env for interpolation).
+      # Use a URL-safe password (hex) since it is embedded in the connection string:
+      #   openssl rand -hex 32
+      DATABASE_URL: postgres://openbot:${POSTGRES_PASSWORD:-openbot}@postgres:5432/openbot
     depends_on:
       postgres:
         condition: service_healthy
@@ -122,7 +128,10 @@ services:
       NODE_ENV: ""
       # Every address below names a service on this network rather than the loopback port the host
       # server reaches it on.
-      DATABASE_URL: postgres://openbot:openbot@postgres:5432/openbot
+      # The database password comes from POSTGRES_PASSWORD (compose reads .env for interpolation).
+      # Use a URL-safe password (hex) since it is embedded in the connection string:
+      #   openssl rand -hex 32
+      DATABASE_URL: postgres://openbot:${POSTGRES_PASSWORD:-openbot}@postgres:5432/openbot
       AGENT_COMPUTER_URL: http://agent-computer:4100
       # Per-Bot computers too, which is not automatic: the supervisor publishes each on a loopback
       # port unless `COMPUTER_NETWORK` names this project's `default` network, and a loopback port on
@@ -160,7 +169,6 @@ services:
       # them out of that file and hands them to Compose in its environment, so they reach this
       # container only by being named here. The defaults are the ones every other service in this
       # file and `scripts/start.sh` agree on.
-      AGENT_TOOL_TOKEN: ${AGENT_TOOL_TOKEN:-}
       COMPUTER_TOKEN: ${COMPUTER_TOKEN:-openbot-dev-computer-token}
       KEY_ENCRYPTION_KEY: ${KEY_ENCRYPTION_KEY:-}
       MANAGED_AGENT_TOKEN: ${MANAGED_AGENT_TOKEN:-}
@@ -244,7 +252,10 @@ services:
     # Its three settings and nothing else. It is handed no `.env`: it does not read the deployment's
     # configuration, and the less this process holds, the less a mistake in it can spend.
     environment:
-      DATABASE_URL: postgres://openbot:openbot@postgres:5432/openbot
+      # The database password comes from POSTGRES_PASSWORD (compose reads .env for interpolation).
+      # Use a URL-safe password (hex) since it is embedded in the connection string:
+      #   openssl rand -hex 32
+      DATABASE_URL: postgres://openbot:${POSTGRES_PASSWORD:-openbot}@postgres:5432/openbot
       SERVER_INTERNAL_URL: http://server:3001
       WORKER_SHARED_SECRET: ${WORKER_SHARED_SECRET:-openbot-dev-worker-secret}
     depends_on:
@@ -540,7 +551,7 @@ services:
       MANAGED_AGENT_TOKEN: ${MANAGED_AGENT_TOKEN:-}
       # Deployment-owned tools use the same signed callback as agent-langgraph.
       OPENBOT_TOOL_URL: ${OPENBOT_TOOL_URL:-http://host.docker.internal:3001/api/agent-tools/call}
-      AGENT_TOOL_TOKEN: ${AGENT_TOOL_TOKEN:-}
+      AGENT_TOOL_TOKEN: ${HARNESS_CALLBACK_TOKEN:-}
       # Whichever the model screen chose. A harness reads the one its provider needs and ignores the
       # rest, and the ones the choice did not imply are written empty rather than left stale: see
       # `ModelCredential`.
@@ -612,7 +623,7 @@ services:
       # what `scripts/start.sh` relies on and that server is on the host. A deployment that starts
       # `server` sets this to `http://server:3001/api/agent-tools/call`, for every Bot at once.
       OPENBOT_TOOL_URL: ${OPENBOT_TOOL_URL:-http://host.docker.internal:3001/api/agent-tools/call}
-      AGENT_TOOL_TOKEN: ${AGENT_TOOL_TOKEN:-}
+      AGENT_TOOL_TOKEN: ${LANGGRAPH_CALLBACK_TOKEN:-}
     extra_hosts:
       - "host.docker.internal:${OPENBOT_HOST_GATEWAY:-host-gateway}"
     healthcheck:

@@ -13,3 +13,20 @@ app/dist
 *.log
 .DS_Store
 assets/*.svg
+# Secrets and credentials that live in the tree beside the code. `.env` is above; these are the
+# others: per-Bot egress keys, the local runtime state, the sign-in file, and every private key
+# format a certificate can be in. A build context carries them to the daemon, and a layer keeps
+# them in the image.
+egress.env
+.openbot
+.langchain
+spire
+.github
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.jks
+**/*.keystore
+**/id_rsa
+**/id_ed25519

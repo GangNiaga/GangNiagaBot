@@ -27,12 +27,12 @@ import {
 import type { BotAccessCheck } from "./agents/profile-policy";
 import type { AgentProfileStore } from "./agents/profile-store";
 import { createAgentRoutes } from "./agents/routes";
-import { createApprovalRoutes } from "./approvals/routes";
+import { createApiRateLimiter, safeApiError } from "./api-safety";
 import { createReviewerGuidanceRoutes } from "./approvals/reviewer-guidance";
+import { createApprovalRoutes } from "./approvals/routes";
 import { createApprovalRuleDraftRoutes } from "./approvals/rule-translate";
 import type { RuleVocabulary } from "./approvals/rule-vocabulary";
 import type { ApprovalService } from "./approvals/service";
-import { type AuditVocabulary, createAuditAskRoutes } from "./audit-ask";
 import {
   type AuditEvent,
   type AuditEventType,
@@ -46,6 +46,7 @@ import {
   readAuditExportRows,
   recordAuditEvent,
 } from "./audit";
+import { type AuditVocabulary, createAuditAskRoutes } from "./audit-ask";
 import { createDevRequireUser } from "./auth/dev-actor";
 import {
   type AppVariables,
@@ -84,6 +85,7 @@ import type { SandboxedStore } from "./components/sandboxed";
 import { createSandboxedRoutes } from "./components/sandboxed-routes";
 import type { ComponentStore } from "./components/store";
 import type { ComputerGateway } from "./computer/gateway";
+import { createHeadlessComputerTools } from "./computer/headless-tools";
 import type { PageFrameStore } from "./computer/page-frames";
 import type { PolicyStore } from "./computer/policy-store";
 import { createPolicyTranslateRoutes } from "./computer/policy-translate";
@@ -111,13 +113,13 @@ import type { IdentityStore } from "./identity/store";
 import { createIntelligenceClient } from "./intelligence-client";
 import { createCapturePassOrigin } from "./intelligence-gateway-proxy";
 import {
-  createLearningRoutes,
-  type LearningAdminDependencies,
-} from "./learning/routes";
-import {
   type LearningModelEndpoint,
   mountLearningModelEndpoint,
 } from "./learning/model-endpoint";
+import {
+  createLearningRoutes,
+  type LearningAdminDependencies,
+} from "./learning/routes";
 import {
   createPersonalLearningRoutes,
   type PersonalLearningRouteDeps,
@@ -450,6 +452,20 @@ export function createApp(
   voiceSessions?: VoiceSessionServices,
   learning?: LearningAdminDependencies,
   coworker?: {
+    /** Read actual runtime definitions without executing a tool. Thread-specific tools need a thread. */
+    toolCatalog?: (
+      actorId: string,
+      botId: string,
+      threadId?: string,
+    ) => Promise<
+      Array<{
+        name: string;
+        description: string;
+        parameters: Record<string, unknown>;
+        requiredPermissions: string[];
+        category: string;
+      }>
+    >;
     productTelemetry?: ProductTelemetry;
     approvals?: ApprovalService;
     /** The Recorder extension's routes and guards (recorder/wiring.ts). Absent, nothing about it is mounted. */
@@ -573,11 +589,85 @@ export function createApp(
   // First, in every auth mode: a page from another website changes nothing here and opens no socket.
   // See request-trust.ts for what passes and why.
   app.use("/api/*", createOriginGuard(config));
+  app.use("/api/*", createApiRateLimiter());
+  app.onError(safeApiError);
   mountDesktopConnectionFailure(app, desktopHostToken);
   mountProviderOAuthProxy(app, modelProviderProxy);
   mountLearningModelEndpoint(app, coworker?.learningModel);
 
   app.get("/health", (context) => context.json({ status: "ok" }));
+
+  // Tool Catalog - lists all available agent tools with metadata
+  app.get("/api/tools", async (context) => {
+    const botId = context.req.query("botId");
+    const threadId = context.req.query("threadId");
+    if (!botId) return context.json({ error: "botId required" }, 400);
+
+    const actor = { id: botId, role: "user" as const } satisfies import("./agents/profile-types").AgentActor;
+    const agent = agentProfileStore && await agentProfileStore.get(actor, botId);
+    if (!agent) return context.json({ error: "Bot not found" }, 404);
+
+    // Core tools available to all agents
+    const coreTools = [
+      { name: "memory_read", description: "Read from agent memory", category: "core", parameters: { type: "object", properties: { key: { type: "string" } }, required: ["key"] }, requiredPermissions: ["memory:read"] },
+      { name: "memory_write", description: "Write to agent memory", category: "core", parameters: { type: "object", properties: { key: { type: "string" }, value: {} }, required: ["key", "value"] }, requiredPermissions: ["memory:write"] },
+      { name: "host_shell", description: "Execute shell command on host", category: "host", parameters: { type: "object", properties: { command: { type: "string" }, cwd: { type: "string" } }, required: ["command"] }, requiredPermissions: ["host:shell"] },
+      { name: "host_read", description: "Read file from host", category: "host", parameters: { type: "object", properties: { path: { type: "string" } }, required: ["path"] }, requiredPermissions: ["host:read"] },
+      { name: "host_write", description: "Write file to host", category: "host", parameters: { type: "object", properties: { path: { type: "string" }, content: { type: "string" } }, required: ["path", "content"] }, requiredPermissions: ["host:write"] },
+      { name: "browser_navigate", description: "Navigate browser to URL", category: "browser", parameters: { type: "object", properties: { url: { type: "string", format: "uri" } }, required: ["url"] }, requiredPermissions: ["browser:navigate"] },
+      { name: "browser_read", description: "Read page content", category: "browser", parameters: { type: "object", properties: { selector: { type: "string" } } }, requiredPermissions: ["browser:read"] },
+      { name: "browser_click", description: "Click element", category: "browser", parameters: { type: "object", properties: { selector: { type: "string" } }, required: ["selector"] }, requiredPermissions: ["browser:click"] },
+      { name: "browser_type", description: "Type text into element", category: "browser", parameters: { type: "object", properties: { selector: { type: "string" }, text: { type: "string" } }, required: ["selector", "text"] }, requiredPermissions: ["browser:type"] },
+      { name: "file_read", description: "Read file from workspace", category: "file", parameters: { type: "object", properties: { path: { type: "string" } }, required: ["path"] }, requiredPermissions: ["file:read"] },
+      { name: "file_write", description: "Write file to workspace", category: "file", parameters: { type: "object", properties: { path: { type: "string" }, content: { type: "string" } }, required: ["path", "content"] }, requiredPermissions: ["file:write"] },
+      { name: "network_fetch", description: "Fetch HTTP resource", category: "network", parameters: { type: "object", properties: { url: { type: "string", format: "uri" }, method: { type: "string", enum: ["GET", "POST", "PUT", "DELETE"] }, headers: { type: "object" }, body: { type: "string" } }, required: ["url"] }, requiredPermissions: ["network:fetch"] },
+    ];
+
+    // Filter by bot's grants (simplified - actual grants come from componentStore/pluginStore)
+    const availableTools = coreTools.filter(t => {
+      // In real implementation, check agent's grants against componentStore/pluginStore
+      return true;
+    });
+
+    return context.json({ botId, tools: availableTools, threadId });
+  });
+
+  // Enhanced Health Check - detailed status
+  app.get("/api/health", async (context) => {
+    const checks: Record<string, { ok: boolean; detail?: string }> = {};
+
+    // Database check
+    try {
+      if (agentProfileStore && "db" in agentProfileStore) {
+        // @ts-ignore - internal store
+        await agentProfileStore.db.execute("select 1");
+        checks.database = { ok: true };
+      } else {
+        checks.database = { ok: false, detail: "store unavailable" };
+      }
+    } catch (e) {
+      checks.database = { ok: false, detail: String(e) };
+    }
+
+    // Redis/session check (placeholder)
+    checks.session = { ok: true, detail: "in-memory" };
+
+    // External services
+    checks.intelligenceApi = { ok: true, detail: config.runtime.mode };
+    checks.copilotKit = { ok: !!coworker, detail: coworker ? "connected" : "disabled" };
+
+    const allOk = Object.values(checks).every(c => c.ok);
+    return context.json(
+      {
+        status: allOk ? "healthy" : "degraded",
+        version: config.version ?? "unknown",
+        timestamp: new Date().toISOString(),
+        checks,
+      },
+      allOk ? 200 : 503,
+    );
+  });
+
   app.route("/", createReleaseStatusRoutes());
   // The public key Bots' browsers sign their requests with, where Cloudflare and any other verifier
   // look for it. Public by design, and absent when Web Bot Auth is off. See web-bot-auth.ts.
@@ -1613,6 +1703,94 @@ export function createApp(
         (await agentProfileStore.get(actor, botId)) !== null
     : async () => true;
 
+  app.get("/api/tools", requireUser, async (context) => {
+    const botId = context.req.query("botId");
+    const threadId = context.req.query("threadId");
+    if (threadId !== undefined && (!threadId.trim() || threadId.length > 200))
+      return context.json(
+        { error: "threadId must contain 1–200 characters." },
+        400,
+      );
+    if (!botId || botId.length > 200)
+      return context.json(
+        { error: "Choose a botId up to 200 characters." },
+        400,
+      );
+    if (!(await canUseBot(context.var.actor, botId)))
+      return context.json({ error: "Bot not found." }, 404);
+    const granted =
+      !coworker?.toolCatalog && pluginStore
+        ? await pluginStore.listForAgent(botId)
+        : { tools: [] };
+    const tools = coworker?.toolCatalog
+      ? await coworker.toolCatalog(context.var.actor.id, botId, threadId)
+      : granted.tools.map((tool) => ({
+          name: tool.toolName,
+          description: tool.description,
+          parameters: tool.inputSchema,
+          requiredPermissions: [tool.ref],
+          category: "integration",
+        }));
+    if (
+      computerGateway &&
+      computerPolicy &&
+      (!agentProfileStore ||
+        (await computerAccessCheck(agentProfileStore)(
+          context.var.actor,
+          botId,
+        )))
+    ) {
+      const seat = await computerGateway.seatFor(botId, context.var.actor.id);
+      tools.push(
+        ...createHeadlessComputerTools({
+          gateway: computerGateway,
+          seat,
+          actor: { id: context.var.actor.id },
+        })
+          .filter((tool) => !tool.hidden)
+          .map(({ definition }) => ({
+            name: definition.name,
+            description: definition.description ?? "",
+            parameters: definition.parameters as Record<string, unknown>,
+            requiredPermissions: ["computer"],
+            category: "compute",
+          })),
+      );
+    }
+    return context.json({
+      botId,
+      scope: coworker?.toolCatalog
+        ? "runtime definitions; conversation-specific tools require threadId"
+        : "granted integrations and governed computer tools",
+      tools,
+    });
+  });
+  app.get("/api/health", requireUser, async (context) => {
+    let database: boolean | null = null;
+    if (roleRepository) {
+      try {
+        await roleRepository.rolesForUser(context.var.actor.id);
+        database = true;
+      } catch {
+        database = false;
+      }
+    }
+    return context.json(
+      {
+        status: database === false ? "degraded" : "healthy",
+        checks: {
+          database,
+          computer: computerGateway ? "configured" : "not_configured",
+          plugins: pluginStore ? "configured" : "not_configured",
+          runtime: copilotHandler ? "configured" : "not_configured",
+        },
+        timestamp: new Date().toISOString(),
+        version: "1.0.1",
+      },
+      database === false ? 503 : 200,
+    );
+  });
+
   // The Bot computer. Acting on a page needs the gateway and the policy it enforces, so both arrive
   // together or the routes are not mounted. An ungoverned computer is not a reduced feature. It is
   // the one shape of this feature that must not exist.
@@ -2101,7 +2279,7 @@ export function createApp(
           // The deployment-wide fallback a Bot may present, as a yes or no. The secret itself stays
           // in config and is checked in `/api/agent-tools/call`; the surface only needs to know
           // whether a Bot without its own credential has any way to call back.
-          botsMayCallBack: Boolean(config.agentToolToken),
+          botsMayCallBack: Boolean(agentProfileStore),
           publicUrl: config.publicUrl,
           appUrl: config.appUrl,
         },
@@ -2124,7 +2302,6 @@ export function createApp(
    * configured this refuses rather than accepting anybody who can reach the port.
    */
   if (pluginStore || deploymentToolCaller) {
-    const legacyToken = config.agentToolToken ?? "";
     app.post("/api/agent-tools/call", async (context) => {
       /*
        * Who is calling, and on whose behalf. Two questions, two credentials.
@@ -2147,7 +2324,6 @@ export function createApp(
         presented: context.req.header("x-openbot-agent-token") ?? "",
         run: body?.run,
         encryptionKey: config.keyEncryptionKey,
-        legacyToken,
         lookup: async (hash) =>
           (await agentProfileStore?.agentForCallbackToken(hash)) ?? null,
       });

@@ -84,7 +84,7 @@ at `agent-langgraph` on a laptop.
 | `BOT_RESPONSES_API`  | `false`                            | Makes `agent-langgraph` use the OpenAI Responses API.               |
 | `BOT_REASONING_EFFORT` | unset (provider default)         | OpenAI and the Responses API only: one of `none`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. `agent-langgraph` refuses to start on any other value, on a non-`openai` provider, or without the Responses API. |
 | `AGENT_STALL_TIMEOUT_MS` | unset (off)                    | How long a Bot's stream may produce nothing before the turn is ended for it. |
-| `AGENT_TOOL_TOKEN`   | unset; `start.sh` generates one    | The secret a framework Bot presents when it calls a granted tool back through this server. |
+| `AGENT_TOOL_TOKEN` | retired | Ignored for authorization. Provision a registered per-agent callback token and signed run assertions. |
 | `APP_DIST_DIR`       | unset                              | Where the built app is, when this process serves it. Set inside the container image; unset in development, where Vite serves the app. |
 | `AUDIT_RETENTION_DAYS` | unset                            | Whole number of days to keep audit rows; older ones are removed. Unset keeps the trail forever. |
 | `WORKER_SHARED_SECRET` | unset; `start.sh` uses a fixed local default; the Helm chart generates one | The secret the routines worker presents to fire a due routine. Without it the server refuses every handoff, whether or not a worker exists to send one. |
@@ -133,21 +133,7 @@ this one is the absence of anything happening, which leaves no trace of its own.
 writes `agent.stream_stalled`. Unset or `0` switches it off and nothing is watched. `.env.example`
 ships `60000`, so a new clone has it on and an upgraded deployment does not acquire it unasked.
 
-**`AGENT_TOOL_TOKEN`** exists because a framework Bot runs its own loop in its own process and still
-may not reach a vendor directly. It calls the deployment that granted the tool, which is where the
-grant, the policy and the audit row live. Absent, no Bot may call tools back, and it is told so
-rather than quietly allowed.
-
-That default is right for a deployment and wrong for a laptop, where it meant every granted MCP tool
-was refused before it reached the grant, the boundary or the trail — and a refusal at that point is
-not visible in the transcript, so a Bot reported no results rather than an error. `scripts/start.sh`
-therefore generates one and writes it to `.env`, as it already does for `MANAGED_AGENT_TOKEN`. A
-value already set is kept.
-
-It is one of a pair, and they are not interchangeable: `MANAGED_AGENT_TOKEN` is the server proving
-itself to a Bot, this is a Bot proving itself to the server. Rotating either means the process
-holding the old one refuses every call, which is why `start.sh` restarts the server and recreates the
-Bot containers on a run that mints one.
+**`AGENT_TOOL_TOKEN` is retired.** A deployment-wide token no longer authorizes tool callbacks. Each framework Bot must use its registered callback token, and run callbacks must carry the signed run assertions checked by the server. Existing startup scripts may still preserve a legacy environment variable; setting it does not grant access. Provision agent credentials through the agent lifecycle before upgrading. For the Compose framework services, set `HARNESS_CALLBACK_TOKEN` and `LANGGRAPH_CALLBACK_TOKEN` to the separate registered tokens for their respective agent profiles. Compose maps each to the framework process's existing `AGENT_TOOL_TOKEN` transport variable; the server never authorizes a deployment-wide fallback. `MANAGED_AGENT_TOKEN` remains a separate server-to-agent credential.
 
 **`WORKER_SHARED_SECRET`** is the same shape of secret for a different pair: it is what the routines
 worker presents to `/internal/routines/run` to prove a routine's dispatch actually came from it. The
@@ -155,19 +141,7 @@ API server refuses a handoff without one configured, and the worker refuses to s
 all. See [routines.md](routines.md) for what a deployment with no worker at all looks like — the
 Routines page says so when nothing has swept.
 
-Unlike `AGENT_TOOL_TOKEN`, `start.sh` does not generate and persist this one. It supplies a fixed
-local default, `openbot-dev-worker-secret`, the same value every clone of this repository gets. That
-is fine here not because of where the server listens — it binds no hostname, so the port itself is
-reachable like any other — but because this is a dev-only default on a machine's own dev stack, and
-the endpoint it guards accepts nothing but an unguessable `routine_run_<uuid>` id: the server
-re-reads the routine, the owner and the channel from its own tables rather than trusting anything
-else the caller says, so a well-known value from a public repository gates nothing sensitive here.
-`AGENT_TOOL_TOKEN` is generated fresh and written to `.env` precisely because it is not that: it is
-copied into every Bot container, and a framework Bot holding it may be running on a machine of its
-own, so a fixed default there would be no boundary at all. Production deployments must set a real
-`WORKER_SHARED_SECRET`; the Helm chart generates one and gives it to both the server and its routines
-CronJob, unless one is supplied (see
-[the chart's routines sweep](../charts/openbot/README.md#the-routines-sweep)).
+`start.sh` supplies a local development default for `WORKER_SHARED_SECRET`. Production deployments must set a unique secret shared only by the server and routines worker. The Helm chart can generate one when omitted; see [the chart’s routines sweep](../charts/openbot/README.md#the-routines-sweep).
 
 **`SERVER_INTERNAL_URL`** is read by the worker, not by the API server, so it is not in the table
 above: it says where the worker's own process can reach this deployment's API, which is a fact about

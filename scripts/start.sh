@@ -71,13 +71,13 @@ ONE_COMPUTER_EACH="$(setting OPENBOT_ONE_COMPUTER_EACH true)"
 export APP_PORT SERVER_PORT
 SUPERVISOR_TOKEN="$(setting SUPERVISOR_TOKEN openbot-dev-supervisor-token)"
 COMPUTER_TOKEN="$(setting COMPUTER_TOKEN openbot-dev-computer-token)"
-# A fixed default is fine here, unlike `AGENT_TOOL_TOKEN` below, but not because of where the server
+# This local-only worker default must be replaced for production; where the server
 # listens — it binds no hostname, so this port is reachable from the network like any other. It is
 # fine because this is a dev-only default on a machine's own dev stack, and the endpoint it guards
 # accepts nothing but an unguessable `routine_run_<uuid>` id: the server re-reads the routine, the
 # owner and the channel from its own tables rather than trusting anything else the caller says, so
 # the fixed default gates nothing sensitive here. That is also why it is generated fresh and
-# persisted for AGENT_TOOL_TOKEN (see the SECRETS_ROTATED block) but not for this one — production
+# persisted for managed-agent credentials, but not for this one — production
 # must set a real WORKER_SHARED_SECRET.
 WORKER_SHARED_SECRET="$(setting WORKER_SHARED_SECRET openbot-dev-worker-secret)"
 
@@ -131,33 +131,7 @@ if [ -z "$MANAGED_AGENT_TOKEN" ]; then
 fi
 export MANAGED_AGENT_TOKEN
 
-# The secret a framework Bot presents when it calls a tool back through this server. The other
-# direction of the pair above: that one is the server proving itself to the Bot, this one is the Bot
-# proving itself to the server, and they are deliberately two different secrets.
-#
-# Generated here for the same reason, and it has to be. `.env.example` ships it empty, which is the
-# right default for a deployment: absent, no Bot may call tools back and it is told so rather than
-# quietly allowed. On a laptop that default meant every MCP tool was dead on arrival. An
-# administrator could enable Google Drive, grant `search_files` to a Bot, read "May call this tool"
-# on the grant screen, and get "This Bot has no credential for calling tools back through its
-# deployment" on every single call, with no audit row, because the call never reached the server to
-# be recorded.
-AGENT_TOOL_TOKEN="$(setting AGENT_TOOL_TOKEN "")"
-if [ -z "$AGENT_TOOL_TOKEN" ]; then
-  SECRETS_ROTATED=true
-  AGENT_TOOL_TOKEN="$(openssl rand -base64 32)"
-  if grep -qE '^AGENT_TOOL_TOKEN=' "$ROOT/.env"; then
-    # A present but empty line, which is what .env.example ships.
-    tmp="$(mktemp)"
-    grep -vE '^AGENT_TOOL_TOKEN=' "$ROOT/.env" > "$tmp"
-    printf 'AGENT_TOOL_TOKEN=%s\n' "$AGENT_TOOL_TOKEN" >> "$tmp"
-    mv "$tmp" "$ROOT/.env"
-  else
-    printf '\nAGENT_TOOL_TOKEN=%s\n' "$AGENT_TOOL_TOKEN" >> "$ROOT/.env"
-  fi
-  printf '\033[2m%s\033[0m\n' "Generated AGENT_TOOL_TOKEN and wrote it to .env."
-fi
-export AGENT_TOOL_TOKEN
+# Callback tokens are provisioned per agent. Do not generate deployment-wide callback credentials.
 
 green() { printf '\033[32m%s\033[0m\n' "$1"; }
 red()   { printf '\033[31m%s\033[0m\n' "$1"; }
@@ -280,8 +254,7 @@ fi
 # matches the deployment's. A skipped service is never handed to `docker compose up`, so compose
 # never compares its configuration and never recreates it.
 #
-# Which is how a Bot ends up holding a secret this deployment no longer accepts. `AGENT_TOOL_TOKEN`
-# is generated above and written to .env; if the container was answering, it kept the previous one,
+# Which is how a Bot can retain stale deployment configuration. If the container was answering, it kept the previous configuration,
 # and every tool call it made was refused at the door. It returns nothing to its own model, and the
 # model tells the person there were no results — a false negative delivered as an answer.
 #
@@ -403,7 +376,7 @@ require_free_or_ours "$SERVER_PORT" server
 #
 # Skipping it on "already answering" is the same mistake the Bot containers had: answering proves the
 # process is alive, not that it agrees with the deployment. A server holding the previous
-# `AGENT_TOOL_TOKEN` refuses every callback its own Bots make, which reaches a person as "no results"
+# stale managed-agent credentials refuse requests, which reaches a person as "no results"
 # rather than as an error.
 if [ "$SECRETS_ROTATED" = "true" ]; then
   info "  a secret was generated this run, so the server is restarted to pick it up"
