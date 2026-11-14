@@ -1,8 +1,5 @@
 import { afterEach, expect, test } from "bun:test";
-import {
-  fastLaneReceiptMessage,
-  tryFastLane,
-} from "./fast-lane";
+import { fastLaneReceiptMessage, tryFastLane } from "./fast-lane";
 
 const originalFetch = globalThis.fetch;
 

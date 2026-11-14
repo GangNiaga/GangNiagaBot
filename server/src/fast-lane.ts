@@ -10,10 +10,7 @@ import type { AgentActor } from "./agents/profile-types";
 import { type AuditStore, recordAuditEvent } from "./audit";
 import type { AppVariables } from "./auth/guards";
 import type { ChannelStore } from "./channels/routes";
-import {
-  ActionRefusedError,
-  type ComputerGateway,
-} from "./computer/gateway";
+import { ActionRefusedError, type ComputerGateway } from "./computer/gateway";
 import { personBrowserId } from "./browser/person";
 import type { UserPreferencesStore } from "./user-preferences";
 
@@ -74,8 +71,7 @@ export function createFastLaneService(
           command.setting === "narration"
             ? current.narration
             : current.proactive;
-        const value =
-          command.value ?? (before === "on" ? "off" : "on");
+        const value = command.value ?? (before === "on" ? "off" : "on");
         const patch =
           command.setting === "narration"
             ? { narration: value }
@@ -109,7 +105,10 @@ export function createFastLaneService(
       const roster = await dependencies.agents.list(actor);
       const resolved = resolveAddressedBot(roster, command.agent);
       if (resolved.kind !== "found") return UNHANDLED;
-      const channel = await dependencies.channels.direct(actor, resolved.bot.id);
+      const channel = await dependencies.channels.direct(
+        actor,
+        resolved.bot.id,
+      );
       if (dependencies.audit) {
         await recordAuditEvent(dependencies.audit, {
           eventType: "channel.routed",

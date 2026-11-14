@@ -62,10 +62,7 @@ test("toggle patches an explicit supported setting and writes a receipt", async 
         skin: "openbot",
         proactive: "on",
       }),
-      patch: async (
-        _userId: string,
-        preferences: Partial<UserPreferences>,
-      ) => {
+      patch: async (_userId: string, preferences: Partial<UserPreferences>) => {
         patches.push(preferences);
         return {
           messageListEmphasis: "thread",
@@ -92,7 +89,12 @@ test("toggle patches an explicit supported setting and writes a receipt", async 
   expect(audits[0]).toMatchObject({
     eventType: "configuration.changed",
     actorUserId: "person-1",
-    payload: { change: "fast_lane_toggle", setting: "narration", from: "on", to: "off" },
+    payload: {
+      change: "fast_lane_toggle",
+      setting: "narration",
+      from: "on",
+      to: "off",
+    },
   });
 });
 
@@ -107,10 +109,7 @@ test("toggle without a value flips the current supported setting", async () => {
         skin: "openbot",
         proactive: "on",
       }),
-      patch: async (
-        _userId: string,
-        preferences: Partial<UserPreferences>,
-      ) => {
+      patch: async (_userId: string, preferences: Partial<UserPreferences>) => {
         patches.push(preferences);
         return {
           messageListEmphasis: "thread",
@@ -191,7 +190,11 @@ test("start resolves one accessible named Bot and opens its direct channel", asy
     eventType: "channel.routed",
     targetId: "bot-1",
     actorUserId: "person-1",
-    payload: { chosen: "bot-1", reason: "fast_lane_explicit_name", fastLane: true },
+    payload: {
+      chosen: "bot-1",
+      reason: "fast_lane_explicit_name",
+      fastLane: true,
+    },
   });
 });
 
@@ -392,10 +395,7 @@ test("the app mounts the fast-lane route with existing injected stores", async (
       skin: "openbot",
       proactive: "on",
     }),
-    patch: async (
-      _userId: string,
-      preferences: Partial<UserPreferences>,
-    ) => {
+    patch: async (_userId: string, preferences: Partial<UserPreferences>) => {
       patches.push(preferences);
       return {
         messageListEmphasis: "thread",

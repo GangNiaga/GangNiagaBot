@@ -1,7 +1,6 @@
 export const FAST_LANE_TOGGLE_SETTINGS = ["narration", "proactive"] as const;
 
-export type FastLaneToggleSetting =
-  (typeof FAST_LANE_TOGGLE_SETTINGS)[number];
+export type FastLaneToggleSetting = (typeof FAST_LANE_TOGGLE_SETTINGS)[number];
 
 export type FastLaneReceipt =
   | { kind: "open"; url: string; title: string }
@@ -34,8 +33,9 @@ export function parseFastLaneCommand(text: string): FastLaneCommand | null {
   if (!trimmed) return null;
 
   const separator = trimmed.search(/\s/);
-  const command = (separator === -1 ? trimmed : trimmed.slice(0, separator))
-    .toLowerCase();
+  const command = (
+    separator === -1 ? trimmed : trimmed.slice(0, separator)
+  ).toLowerCase();
   const rest = separator === -1 ? "" : trimmed.slice(separator).trim();
 
   if (command === "open") {

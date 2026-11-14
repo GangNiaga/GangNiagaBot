@@ -1,8 +1,5 @@
 import { expect, test } from "bun:test";
-import {
-  normalizeFastLaneUrl,
-  parseFastLaneCommand,
-} from "./fast-lane";
+import { normalizeFastLaneUrl, parseFastLaneCommand } from "./fast-lane";
 
 test("parses the three supported fast-lane commands", () => {
   expect(parseFastLaneCommand("open https://example.com/docs")).toEqual({
@@ -53,7 +50,5 @@ test("normalizes only explicit web targets", () => {
     "https://example.com:8080/path",
   );
   expect(normalizeFastLaneUrl("mailto:someone@example.com")).toBeNull();
-  expect(
-    normalizeFastLaneUrl("https://user:secret@example.com"),
-  ).toBeNull();
+  expect(normalizeFastLaneUrl("https://user:secret@example.com")).toBeNull();
 });
