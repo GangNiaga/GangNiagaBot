@@ -1502,6 +1502,20 @@ describe("published secrets gate", () => {
     ).toThrow("WORKER_SHARED_SECRET");
   });
 
+  test("refuses published secrets in a container without a public URL", () => {
+    expect(() =>
+      loadConfig({
+        ...baseEnvironment,
+        NODE_ENV: undefined,
+        OPENBOT_IN_CONTAINER: "true",
+        DATABASE_URL: loopbackDb,
+        COMPUTER_TOKEN: "openbot-dev-computer-token",
+        SUPERVISOR_TOKEN: "openbot-dev-supervisor-token",
+        WORKER_SHARED_SECRET: "openbot-dev-worker-secret",
+      }),
+    ).toThrow(/COMPUTER_TOKEN.*SUPERVISOR_TOKEN.*WORKER_SHARED_SECRET.*DATABASE_URL/s);
+  });
+
   test("refuses published DATABASE_URL password when DB host is beyond this machine", () => {
     expect(() =>
       loadConfig(productionEnv(remoteDb)),

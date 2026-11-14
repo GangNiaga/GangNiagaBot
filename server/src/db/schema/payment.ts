@@ -35,7 +35,7 @@ export const paymentTransactions = pgTable(
   "payment_transactions",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    companyId: text("company_id"),
+    companyId: text("company_id").notNull(),
     gateway: text("gateway").notNull(),
     gatewayTxnId: text("gateway_txn_id"),
     idempotencyKey: text("idempotency_key").notNull(),
@@ -66,6 +66,10 @@ export const paymentTransactions = pgTable(
     index("idx_payment_transactions_company").on(table.companyId),
     check("payment_transactions_amount_positive", sql`${table.amount} > 0`),
     check(
+      "payment_transactions_amount_safe_integer",
+      sql`${table.amount} <= 9007199254740991`,
+    ),
+    check(
       "payment_transactions_amount_unit_check",
       sql`${table.amountUnit} IN ('minor', 'major')`,
     ),
@@ -92,7 +96,7 @@ export const paymentTransactions = pgTable(
       withCheck: sql`true`,
     }),
   ],
-);
+).enableRLS();
 
 export type PaymentTransaction = InferSelectModel<typeof paymentTransactions>;
 export type NewPaymentTransaction = InferInsertModel<
@@ -139,7 +143,7 @@ export const paymentEvents = pgTable(
       withCheck: sql`true`,
     }),
   ],
-);
+).enableRLS();
 
 export type PaymentEvent = InferSelectModel<typeof paymentEvents>;
 export type NewPaymentEvent = InferInsertModel<typeof paymentEvents>;

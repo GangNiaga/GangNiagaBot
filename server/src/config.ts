@@ -637,14 +637,12 @@ const PUBLISHED_DATABASE_PASSWORD = "openbot";
  *
  *   1. the secret is still the published one — unset is not a published secret, and a deployment that
  *      set its own value is not what this is about;
- *   2. somebody other than the person at this machine can reach the deployment — either because it
- *      runs as production (which is what every container image says, including the chart's own local
- *      trial, and why the container is not the signal on its own) or because it names an address
- *      beyond this machine.
+ *   2. somebody other than the person at this machine can reach the deployment — because it runs as
+ *      production, runs inside a container whose network peers are not this process's loopback, or
+ *      names an address beyond this machine.
  *
- * A deployment only this machine can reach keeps the published defaults, because there is nobody to
- * use them: `scripts/start.sh` and `docker compose up` on a laptop are the case this exists to leave
- * working. A deployment on a LAN, behind a tunnel, or in a container is the case it exists to stop,
+ * A host process only this machine can reach keeps the published defaults, because there is nobody to
+ * use them. A deployment on a LAN, behind a tunnel, or in a container is the case it exists to stop,
  * and the refusal names the variables and how to replace them.
  */
 /**
@@ -663,15 +661,29 @@ function databaseBeyondThisMachine(databaseUrl: string): boolean {
 }
 
 function refusePublishedSecrets(environment: Environment): void {
-  const published = Object.entries(PUBLISHED_DEV_SECRETS).filter(
+	const inContainer = optional(environment, "OPENBOT_IN_CONTAINER") === "true";
+	const beyond = addressesBeyondThisMachine(environment);
+	const hasLoopbackAddress = [
+		optional(environment, "OPENBOT_PUBLIC_URL"),
+		optional(environment, "OPENBOT_APP_URL"),
+	].some((address) => {
+		if (!address) return false;
+		try {
+			return isLoopbackHost(new URL(address).hostname);
+		} catch {
+			return false;
+		}
+	});
+	const containerBeyond = inContainer && (!hasLoopbackAddress || beyond.length > 0);
+	const published = Object.entries(PUBLISHED_DEV_SECRETS).filter(
     ([name, value]) => optional(environment, name) === value,
   );
   const databaseUrl = optional(environment, "DATABASE_URL");
   if (databaseUrl) {
     try {
       if (
-        new URL(databaseUrl).password === PUBLISHED_DATABASE_PASSWORD &&
-        databaseBeyondThisMachine(databaseUrl)
+				new URL(databaseUrl).password === PUBLISHED_DATABASE_PASSWORD &&
+				(containerBeyond || databaseBeyondThisMachine(databaseUrl))
       ) {
         published.push(["DATABASE_URL", PUBLISHED_DATABASE_PASSWORD]);
       }
@@ -681,8 +693,7 @@ function refusePublishedSecrets(environment: Environment): void {
   }
   if (published.length === 0) return;
 
-  const beyond = addressesBeyondThisMachine(environment);
-  if (!isProduction(environment) && beyond.length === 0) return;
+	if (!isProduction(environment) && !containerBeyond && beyond.length === 0) return;
 
   const names = published.map(([name]) => name).join(", ");
   const hints = published.map(([name]) => {
@@ -699,9 +710,9 @@ function refusePublishedSecrets(environment: Environment): void {
         return name;
     }
   });
-  throw new Error(
-    `${names} ${published.length === 1 ? "is" : "are"} still the development secret published in this repository, which anybody can read, and this deployment ${isProduction(environment) ? "runs as production" : `is reached at ${beyond.join(", ")}, beyond this machine`}. ${hints.join("; ")}`,
-  );
+	throw new Error(
+		`${names} ${published.length === 1 ? "is" : "are"} still the development secret published in this repository, which anybody can read, and this deployment ${isProduction(environment) ? "runs as production" : containerBeyond ? "runs in a container that is not proven local-only" : `is reached at ${beyond.join(", ")}, beyond this machine`}. ${hints.join("; ")}`,
+	);
 }
 
 /**

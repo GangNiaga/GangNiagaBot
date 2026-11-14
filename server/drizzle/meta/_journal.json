@@ -638,6 +638,13 @@
       "when": 1794510303459,
       "tag": "0090_payment_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1794606384084,
+      "tag": "0091_payment_tenant_hardening",
+      "breakpoints": true
     }
   ]
 }

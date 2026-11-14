@@ -75,3 +75,26 @@ test("diagnostics require identity and tool catalogs enforce Bot visibility", as
       .status,
   ).toBe(400);
 });
+
+test("authenticated diagnostics report a degraded database without exposing errors", async () => {
+  const auth: AuthService = {
+    handler: () => new Response(),
+    api: {
+      getSession: async () => ({ user: { id: "person", email: "person@example.test" } }),
+    },
+  };
+  const roles: RoleRepository = {
+    rolesForUser: async () => {
+      throw new Error("database password and internal host");
+    },
+  };
+  const app = createApp(loadConfig(testEnvironment()), auth, roles);
+  const response = await app.request("/api/health", {
+    headers: { authorization: "Bearer test" },
+  });
+  expect(response.status).toBe(503);
+  const body = await response.json();
+  expect(body.status).toBe("degraded");
+  expect(body.checks.database).toBe(false);
+  expect(JSON.stringify(body)).not.toContain("internal host");
+});
