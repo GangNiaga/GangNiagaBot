@@ -21,6 +21,8 @@ DROP POLICY IF EXISTS "payment_transactions_service_role_manage" ON "payment_tra
 DROP POLICY IF EXISTS "payment_events_service_role_manage" ON "payment_events";--> statement-breakpoint
 DROP POLICY IF EXISTS "payment_transactions_service_role_all" ON "payment_transactions";--> statement-breakpoint
 DROP POLICY IF EXISTS "payment_events_service_role_all" ON "payment_events";--> statement-breakpoint
+DROP POLICY IF EXISTS "payment_transactions_owner_manage" ON "payment_transactions";--> statement-breakpoint
+DROP POLICY IF EXISTS "payment_events_owner_manage" ON "payment_events";--> statement-breakpoint
 
 -- ------------------------------------------------------------- data backfill
 -- Legacy rows created before `idempotency_key` existed inherit the gateway
@@ -80,12 +82,36 @@ ALTER TABLE "payment_transactions" ADD CONSTRAINT "payment_transactions_paid_at_
 ALTER TABLE "payment_transactions" ADD CONSTRAINT "payment_transactions_status_check" CHECK ("payment_transactions"."status" IN ('pending', 'processing', 'paid', 'failed', 'expired', 'refunded'));--> statement-breakpoint
 
 -- --------------------------------------------------------------------- policies
--- The owner role always exists. The Supabase `service_role` only exists on
--- Supabase-provisioned databases, so its policy is created conditionally and
--- always with an explicit `TO` list. A missing role is never silently replaced
--- by a PUBLIC policy.
-CREATE POLICY "payment_transactions_service_role_manage" ON "payment_transactions" AS PERMISSIVE FOR ALL TO "postgres" USING (true) WITH CHECK (true);--> statement-breakpoint
-CREATE POLICY "payment_events_service_role_manage" ON "payment_events" AS PERMISSIVE FOR ALL TO "postgres" USING (true) WITH CHECK (true);--> statement-breakpoint
+-- The owner role always exists, but its name is environment-specific: the CI
+-- service creates `openbot`, Docker Compose uses `POSTGRES_USER`, and Supabase
+-- uses `postgres`. Naming one of them made the migration fail on every
+-- deployment whose role is called something else, so the owner is resolved from
+-- the ledger tables themselves and the policy is created for that role. The
+-- Supabase `service_role` only exists on Supabase-provisioned databases, so its
+-- policy is created conditionally. Both policies always carry an explicit `TO`
+-- list; a missing role is never silently replaced by a PUBLIC policy.
+DO $$
+DECLARE
+  table_name text;
+  owner_name text;
+BEGIN
+  FOREACH table_name IN ARRAY ARRAY['payment_transactions', 'payment_events'] LOOP
+    SELECT r.rolname INTO owner_name
+    FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    JOIN pg_roles r ON r.oid = c.relowner
+    WHERE c.relname = table_name AND n.nspname = 'public';
+    IF owner_name IS NOT NULL THEN
+      EXECUTE format(
+        'CREATE POLICY %I ON %I AS PERMISSIVE FOR ALL TO %I USING (true) WITH CHECK (true)',
+        table_name || '_owner_manage',
+        table_name,
+        owner_name
+      );
+    END IF;
+  END LOOP;
+END
+$$;--> statement-breakpoint
 
 DO $$
 BEGIN
