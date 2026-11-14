@@ -1,8 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "local>CopilotKit/renovate"
-  ],
+  "extends": ["local>CopilotKit/renovate"],
   "dependencyDashboard": {
     "enabled": false
   },
@@ -16,16 +14,12 @@
   },
   "packageRules": [
     {
-      "matchDatasources": [
-        "docker"
-      ],
+      "matchDatasources": ["docker"],
       "pinDigests": true
     },
     {
       "groupName": "github-actions",
-      "matchManagers": [
-        "github-actions"
-      ],
+      "matchManagers": ["github-actions"],
       "groupSlug": "github-actions"
     }
   ]

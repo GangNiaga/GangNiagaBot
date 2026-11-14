@@ -420,8 +420,12 @@ const disagreements = (sql: string, before: Snapshot, after: Snapshot) => {
       if (!added) continue;
       const statement = declared(tail ?? "");
       // Backfill migrations can add nullable first and constrain the column later.
-      for(const [on,which,operation] of quoted(sql,/ALTER TABLE "([^"]+)" ALTER COLUMN "([^"]+)" (SET|DROP) NOT NULL/gi)) {
-        if(on===table && which===column) statement.notNull=operation?.toUpperCase()==="SET";
+      for (const [on, which, operation] of quoted(
+        sql,
+        /ALTER TABLE "([^"]+)" ALTER COLUMN "([^"]+)" (SET|DROP) NOT NULL/gi,
+      )) {
+        if (on === table && which === column)
+          statement.notNull = operation?.toUpperCase() === "SET";
       }
       if (added.type !== statement.type)
         problems.push(
@@ -586,9 +590,27 @@ describe("the migration journal", () => {
   });
 });
 
-test("migration contract follows an explicit NOT NULL after nullable backfill",()=>{
-  const before:Snapshot={tables:{sample:{name:"sample",columns:{}}}};
-  const after:Snapshot={tables:{sample:{name:"sample",columns:{key:{name:"key",type:"text",notNull:true}}}}};
-  expect(disagreements('ALTER TABLE "sample" ADD COLUMN "key" text; UPDATE "sample" SET "key" = 1; ALTER TABLE "sample" ALTER COLUMN "key" SET NOT NULL;',before,after)).toEqual([]);
-  expect(disagreements('ALTER TABLE "sample" ADD COLUMN "key" text;',before,after).length).toBeGreaterThan(0);
+test("migration contract follows an explicit NOT NULL after nullable backfill", () => {
+  const before: Snapshot = {
+    tables: { sample: { name: "sample", columns: {} } },
+  };
+  const after: Snapshot = {
+    tables: {
+      sample: {
+        name: "sample",
+        columns: { key: { name: "key", type: "text", notNull: true } },
+      },
+    },
+  };
+  expect(
+    disagreements(
+      'ALTER TABLE "sample" ADD COLUMN "key" text; UPDATE "sample" SET "key" = 1; ALTER TABLE "sample" ALTER COLUMN "key" SET NOT NULL;',
+      before,
+      after,
+    ),
+  ).toEqual([]);
+  expect(
+    disagreements('ALTER TABLE "sample" ADD COLUMN "key" text;', before, after)
+      .length,
+  ).toBeGreaterThan(0);
 });

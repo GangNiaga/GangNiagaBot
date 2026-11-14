@@ -181,7 +181,11 @@ describe("who may call a tool back, and as whom", () => {
   });
 
   test("refuses the retired deployment-wide token even with a valid assertion", async () => {
-    expect(await call("legacy-secret", runForA(), "legacy-secret")).toEqual({ok:false,status:401,reason:"Not authorised."});
+    expect(await call("legacy-secret", runForA(), "legacy-secret")).toEqual({
+      ok: false,
+      status: 401,
+      reason: "Not authorised.",
+    });
   });
 
   test("refuses the deployment-wide token when it is not configured", async () => {
@@ -401,7 +405,12 @@ describe("the tool-call route a callback token guards", () => {
       undefined,
       undefined,
       undefined,
-      {agentForCallbackToken: async (hash:string) => hash===hashCallbackToken(DEPLOYMENT_TOKEN) ? {id:"knowledge"} : null} as unknown as import("../src/agents/profile-store").AgentProfileStore,
+      {
+        agentForCallbackToken: async (hash: string) =>
+          hash === hashCallbackToken(DEPLOYMENT_TOKEN)
+            ? { id: "knowledge" }
+            : null,
+      } as unknown as import("../src/agents/profile-store").AgentProfileStore,
       undefined,
       undefined,
       undefined,
@@ -602,7 +611,12 @@ describe("the tool-call route a callback token guards", () => {
       undefined,
       undefined,
       undefined,
-      {agentForCallbackToken: async (hash:string) => hash===hashCallbackToken(DEPLOYMENT_TOKEN) ? {id:"knowledge"} : null} as unknown as import("../src/agents/profile-store").AgentProfileStore,
+      {
+        agentForCallbackToken: async (hash: string) =>
+          hash === hashCallbackToken(DEPLOYMENT_TOKEN)
+            ? { id: "knowledge" }
+            : null,
+      } as unknown as import("../src/agents/profile-store").AgentProfileStore,
       undefined,
       undefined,
       undefined,

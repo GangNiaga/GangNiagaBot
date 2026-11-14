@@ -661,29 +661,30 @@ function databaseBeyondThisMachine(databaseUrl: string): boolean {
 }
 
 function refusePublishedSecrets(environment: Environment): void {
-	const inContainer = optional(environment, "OPENBOT_IN_CONTAINER") === "true";
-	const beyond = addressesBeyondThisMachine(environment);
-	const hasLoopbackAddress = [
-		optional(environment, "OPENBOT_PUBLIC_URL"),
-		optional(environment, "OPENBOT_APP_URL"),
-	].some((address) => {
-		if (!address) return false;
-		try {
-			return isLoopbackHost(new URL(address).hostname);
-		} catch {
-			return false;
-		}
-	});
-	const containerBeyond = inContainer && (!hasLoopbackAddress || beyond.length > 0);
-	const published = Object.entries(PUBLISHED_DEV_SECRETS).filter(
+  const inContainer = optional(environment, "OPENBOT_IN_CONTAINER") === "true";
+  const beyond = addressesBeyondThisMachine(environment);
+  const hasLoopbackAddress = [
+    optional(environment, "OPENBOT_PUBLIC_URL"),
+    optional(environment, "OPENBOT_APP_URL"),
+  ].some((address) => {
+    if (!address) return false;
+    try {
+      return isLoopbackHost(new URL(address).hostname);
+    } catch {
+      return false;
+    }
+  });
+  const containerBeyond =
+    inContainer && (!hasLoopbackAddress || beyond.length > 0);
+  const published = Object.entries(PUBLISHED_DEV_SECRETS).filter(
     ([name, value]) => optional(environment, name) === value,
   );
   const databaseUrl = optional(environment, "DATABASE_URL");
   if (databaseUrl) {
     try {
       if (
-				new URL(databaseUrl).password === PUBLISHED_DATABASE_PASSWORD &&
-				(containerBeyond || databaseBeyondThisMachine(databaseUrl))
+        new URL(databaseUrl).password === PUBLISHED_DATABASE_PASSWORD &&
+        (containerBeyond || databaseBeyondThisMachine(databaseUrl))
       ) {
         published.push(["DATABASE_URL", PUBLISHED_DATABASE_PASSWORD]);
       }
@@ -693,7 +694,8 @@ function refusePublishedSecrets(environment: Environment): void {
   }
   if (published.length === 0) return;
 
-	if (!isProduction(environment) && !containerBeyond && beyond.length === 0) return;
+  if (!isProduction(environment) && !containerBeyond && beyond.length === 0)
+    return;
 
   const names = published.map(([name]) => name).join(", ");
   const hints = published.map(([name]) => {
@@ -710,9 +712,9 @@ function refusePublishedSecrets(environment: Environment): void {
         return name;
     }
   });
-	throw new Error(
-		`${names} ${published.length === 1 ? "is" : "are"} still the development secret published in this repository, which anybody can read, and this deployment ${isProduction(environment) ? "runs as production" : containerBeyond ? "runs in a container that is not proven local-only" : `is reached at ${beyond.join(", ")}, beyond this machine`}. ${hints.join("; ")}`,
-	);
+  throw new Error(
+    `${names} ${published.length === 1 ? "is" : "are"} still the development secret published in this repository, which anybody can read, and this deployment ${isProduction(environment) ? "runs as production" : containerBeyond ? "runs in a container that is not proven local-only" : `is reached at ${beyond.join(", ")}, beyond this machine`}. ${hints.join("; ")}`,
+  );
 }
 
 /**

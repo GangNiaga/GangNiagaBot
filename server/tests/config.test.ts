@@ -1461,7 +1461,8 @@ describe("edition", () => {
 describe("published secrets gate", () => {
   const loopbackDb = "postgres://openbot:openbot@localhost:5432/openbot";
   const remoteDb = "postgres://openbot:openbot@db.example.com:5432/openbot";
-  const customDb = "postgres://openbot:custom-password@db.example.com:5432/openbot";
+  const customDb =
+    "postgres://openbot:custom-password@db.example.com:5432/openbot";
 
   // Helper that builds a production-like env with a custom DB URL
   function productionEnv(dbUrl: string) {
@@ -1513,25 +1514,21 @@ describe("published secrets gate", () => {
         SUPERVISOR_TOKEN: "openbot-dev-supervisor-token",
         WORKER_SHARED_SECRET: "openbot-dev-worker-secret",
       }),
-    ).toThrow(/COMPUTER_TOKEN.*SUPERVISOR_TOKEN.*WORKER_SHARED_SECRET.*DATABASE_URL/s);
+    ).toThrow(
+      /COMPUTER_TOKEN.*SUPERVISOR_TOKEN.*WORKER_SHARED_SECRET.*DATABASE_URL/s,
+    );
   });
 
   test("refuses published DATABASE_URL password when DB host is beyond this machine", () => {
-    expect(() =>
-      loadConfig(productionEnv(remoteDb)),
-    ).toThrow("DATABASE_URL");
+    expect(() => loadConfig(productionEnv(remoteDb))).toThrow("DATABASE_URL");
   });
 
   test("allows published DATABASE_URL password when DB host is loopback", () => {
-    expect(() =>
-      loadConfig(productionEnv(loopbackDb)),
-    ).not.toThrow();
+    expect(() => loadConfig(productionEnv(loopbackDb))).not.toThrow();
   });
 
   test("allows custom DATABASE_URL password when DB host is beyond this machine", () => {
-    expect(() =>
-      loadConfig(productionEnv(customDb)),
-    ).not.toThrow();
+    expect(() => loadConfig(productionEnv(customDb))).not.toThrow();
   });
 
   test("refusal message names the variable and suggests openssl rand -hex 32", () => {

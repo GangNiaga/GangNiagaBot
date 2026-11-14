@@ -25,7 +25,10 @@ function NotFoundComponent() {
 
   return (
     <main className="grid min-h-dvh place-items-center bg-background px-6 text-foreground">
-      <section className="w-full max-w-md text-center" aria-labelledby="not-found-title">
+      <section
+        className="w-full max-w-md text-center"
+        aria-labelledby="not-found-title"
+      >
         <p className="text-sm font-medium text-muted-foreground">404</p>
         <h1 id="not-found-title" className="mt-2 text-3xl font-semibold">
           Page not found
@@ -65,7 +68,9 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
           Something went wrong
         </h1>
         <p className="mt-3 text-muted-foreground">
-          {error instanceof Error ? error.message : "The page could not be loaded."}
+          {error instanceof Error
+            ? error.message
+            : "The page could not be loaded."}
         </p>
         <div className="mt-6 flex justify-center gap-3">
           <Button onClick={reset}>Try again</Button>

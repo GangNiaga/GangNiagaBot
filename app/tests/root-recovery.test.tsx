@@ -1,11 +1,4 @@
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  expect,
-  spyOn,
-  test,
-} from "bun:test";
+import { afterAll, afterEach, beforeAll, expect, spyOn, test } from "bun:test";
 import { GlobalRegistrator } from "@happy-dom/global-registrator";
 import {
   createMemoryHistory,
@@ -41,7 +34,9 @@ test("an unmatched route renders a 404 view without redirecting", async () => {
 
   const view = render(<RouterProvider router={router as never} />);
 
-  expect(await view.findByRole("heading", { name: "Page not found" })).toBeTruthy();
+  expect(
+    await view.findByRole("heading", { name: "Page not found" }),
+  ).toBeTruthy();
   expect(router.state.location.pathname).toBe("/missing");
 });
 
@@ -67,7 +62,9 @@ test("a route error renders an alert with retry and back controls", async () => 
 
     const alert = await view.findByRole("alert");
     expect(alert.textContent).toContain("The route could not be loaded.");
-    await waitFor(() => expect(document.activeElement?.id).toBe("root-error-title"));
+    await waitFor(() =>
+      expect(document.activeElement?.id).toBe("root-error-title"),
+    );
     expect(view.getByRole("button", { name: "Try again" })).toBeTruthy();
     expect(view.getByRole("button", { name: "Go back" })).toBeTruthy();
   } finally {

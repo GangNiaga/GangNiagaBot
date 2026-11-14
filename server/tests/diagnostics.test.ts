@@ -80,7 +80,9 @@ test("authenticated diagnostics report a degraded database without exposing erro
   const auth: AuthService = {
     handler: () => new Response(),
     api: {
-      getSession: async () => ({ user: { id: "person", email: "person@example.test" } }),
+      getSession: async () => ({
+        user: { id: "person", email: "person@example.test" },
+      }),
     },
   };
   const roles: RoleRepository = {
