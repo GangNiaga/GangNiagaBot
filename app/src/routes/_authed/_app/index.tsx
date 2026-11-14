@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
   Link,
@@ -20,6 +20,7 @@ import { SidebarToggleBar } from "@/components/layout/sidebar-toggle";
 import { StarterSuggestions } from "@/components/starter-tour/starter-suggestions";
 import { Empty, EmptyHeader, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/components/ui/toast";
 import { defaultAgentProfile } from "@/lib/agents/default-agent";
 import { agentListQueryOptions, isSharedWithYou } from "@/lib/agents/queries";
 import { firstConversationGreeting } from "@/lib/auth/greeting";
@@ -40,6 +41,7 @@ import {
 import { useStartChannel } from "@/lib/channels/start";
 import { deploymentCapabilitiesQueryOptions } from "@/lib/deployment/queries";
 import { editionOf } from "@/lib/edition-guard";
+import { fastLaneReceiptMessage, tryFastLane } from "@/lib/fast-lane";
 import { newId } from "@/lib/new-id";
 import { useAnyBotSkillCommands } from "@/lib/plugins/skill-commands";
 
@@ -79,6 +81,7 @@ function RouteComponent() {
   const { start, startChosen, pending } = useStartChannel();
   const router = useRouter();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   // A start that failed behind its placeholder comes back here: its words in the box, its reason
   // under it, the way a failed send always left them. Taken on mount, and again whenever one fails
   // while this page is open (somebody who came back here before it failed is looking at it).
@@ -219,10 +222,38 @@ function RouteComponent() {
                 ? { initialValue: asked, autoFocus: true }
                 : {})}
             onSubmit={async (draft) => {
+              setError(null);
+              try {
+                const fastLane = await tryFastLane(draft.text);
+                if (fastLane) {
+                  toast.add({
+                    title: fastLaneReceiptMessage(fastLane.receipt),
+                    type: "success",
+                  });
+                  if (fastLane.receipt.kind === "toggle") {
+                    await queryClient.invalidateQueries({
+                      queryKey: ["settings", "preferences"],
+                    });
+                  }
+                  if (fastLane.receipt.kind === "start") {
+                    await navigate({
+                      params: { channelId: fastLane.receipt.channelId },
+                      to: "/channel/$channelId",
+                    });
+                  }
+                  return;
+                }
+              } catch (caught) {
+                const message =
+                  caught instanceof Error
+                    ? caught.message
+                    : "That command could not be completed.";
+                toast.add({ title: message, type: "error" });
+                throw caught;
+              }
               // The conversation opens NOW, as a placeholder showing the message, and the Bot is
               // picked and the channel made behind it; see `pending-start.ts`. Waiting here for
               // both is what kept send looking dead for seconds.
-              setError(null);
               const pendingId = newId();
               beginPendingStart(pendingId, {
                 text: draft.text,

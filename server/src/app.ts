@@ -8,6 +8,7 @@ import { createCapabilityChangeRoutes } from "./admin/capability-translate";
 import { enterpriseControls } from "./admin/controls";
 import { createEnterpriseGate } from "./admin/gate";
 import { createNetworkAllowlistRoutes } from "./admin/network-routes";
+import { createFastLaneRoutes, createFastLaneService } from "./fast-lane";
 import {
   createEnterpriseAdminRoutes,
   createProactiveAdminRoutes,
@@ -972,6 +973,19 @@ export function createApp(
   app.route(
     "/api/settings/preferences",
     userPreferencesRoutes(requireUser, userPreferences),
+  );
+  app.route(
+    "/api/fast-lane",
+    createFastLaneRoutes(
+      createFastLaneService({
+        ...(computerGateway ? { computer: computerGateway } : {}),
+        ...(agentProfileStore ? { agents: agentProfileStore } : {}),
+        ...(channelStore ? { channels: channelStore } : {}),
+        ...(userPreferences ? { preferences: userPreferences } : {}),
+        ...(auditStore ? { audit: auditStore } : {}),
+      }),
+      requireUser,
+    ),
   );
 
   /*

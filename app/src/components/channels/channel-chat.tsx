@@ -7,6 +7,7 @@ import {
   useCopilotKit,
 } from "@copilotkit/react-core/v2";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { BotOrb } from "@/components/agents/bot-orb";
 import { ConversationAllowances } from "@/components/approvals/conversation-allowances";
@@ -25,6 +26,7 @@ import { ModelPicker } from "@/components/channels/composer/model-picker";
 import { ConversationIntro } from "@/components/channels/conversation-intro";
 import { ConversationView } from "@/components/channels/conversation-view";
 import { ProgressRow } from "@/components/channels/progress-row";
+import { toast } from "@/components/ui/toast";
 import {
   seedMessage,
   takeFirstMessage,
@@ -63,6 +65,7 @@ import {
 import { offerItsOwnTools } from "@/lib/copilot/bot-offer";
 import { ConversationProvider } from "@/lib/copilot/conversation";
 import { afterMs, joinWithin } from "@/lib/copilot/join-thread";
+import { fastLaneReceiptMessage, tryFastLane } from "@/lib/fast-lane";
 import {
   repairUnansweredToolCalls,
   unansweredToolCalls,
@@ -411,6 +414,7 @@ export function ChannelChat({
 }) {
   // The core attaches the frontend tool registry; direct agent runs do not.
   const { copilotkit } = useCopilotKit();
+  const navigate = useNavigate();
   // Mentions are scoped to the channel's permitted agents.
   const { data: agentProfiles } = useQuery(agentListQueryOptions());
   const botProfile = agentProfiles?.find(
@@ -1540,6 +1544,36 @@ export function ChannelChat({
               </>
             }
             onSubmit={async (draft) => {
+              try {
+                const fastLane = await tryFastLane(draft.text);
+                if (fastLane) {
+                  toast.add({
+                    title: fastLaneReceiptMessage(fastLane.receipt),
+                    type: "success",
+                  });
+                  if (fastLane.receipt.kind === "toggle") {
+                    await queries.invalidateQueries({
+                      queryKey: ["settings", "preferences"],
+                    });
+                  }
+                  if (fastLane.receipt.kind === "start") {
+                    await navigate({
+                      params: { channelId: fastLane.receipt.channelId },
+                      to: "/channel/$channelId",
+                    });
+                  }
+                  return;
+                }
+              } catch (caught) {
+                toast.add({
+                  title:
+                    caught instanceof Error
+                      ? caught.message
+                      : "That command could not be completed.",
+                  type: "error",
+                });
+                throw caught;
+              }
               await runModel.beforeSend();
               // `draft.agentId` carries the @mentioned coworker, but nothing routes on it yet: this
               // channel is pinned to one `runtimeAgentId` for the life of its thread, so honouring a
