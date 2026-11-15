@@ -36,7 +36,7 @@
  * prettier wraps however it likes, and a parser does not care.
  */
 import { readFileSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 import ts from "typescript";
 import { sourceFiles } from "./source-scan";
 
@@ -66,6 +66,11 @@ export const BUILT_IN_TOOL_ROOTS = [
   "agent-bot/src",
   "agent-computer/src",
 ] as const;
+
+/** A path written the same way on every machine, so a site's key does not change with the separator. */
+function posix(path: string): string {
+  return path.split(sep).join("/");
+}
 
 function isTestFile(path: string): boolean {
   return (
@@ -258,7 +263,7 @@ type Reading =
 export function builtInTools(repoRoot: string): BuiltInTools {
   const files = BUILT_IN_TOOL_ROOTS.flatMap((root) =>
     sourceFiles(join(repoRoot, root), [".ts", ".tsx"]),
-  ).filter((file) => !isTestFile(relative(repoRoot, file)));
+  ).filter((file) => !isTestFile(posix(relative(repoRoot, file))));
   const sources = files.map((file) =>
     ts.createSourceFile(
       file,
@@ -288,7 +293,7 @@ export function builtInTools(repoRoot: string): BuiltInTools {
     unresolved: [],
   };
   for (const source of sources) {
-    const file = relative(repoRoot, source.fileName);
+    const file = posix(relative(repoRoot, source.fileName));
     const lineOf = (node: ts.Node) =>
       source.getLineAndCharacterOfPosition(node.getStart(source)).line + 1;
     const constant = (name: string): string | undefined => {

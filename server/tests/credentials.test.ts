@@ -762,6 +762,14 @@ describe("admin credential API", () => {
             revokedAt: null,
           };
         },
+        // The service carries these; this test exercises neither, and says so rather than
+        // pretending they work.
+        rotate: async () => {
+          throw new Error("rotate is not exercised by this test");
+        },
+        revoke: async () => {
+          throw new Error("revoke is not exercised by this test");
+        },
       },
     );
 

@@ -27,7 +27,7 @@
 //   bun scripts/typecheck-tests.ts --update   # rewrite the baseline from the current output
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -86,11 +86,10 @@ function parse(output: string): Diagnostic[] {
     const [, file, line, code, message] = match;
     // tsc prints the project-relative path in the location, but absolute paths inside some
     // messages (TS6142 names the resolved file). Strip the checkout prefix so the baseline is
-    // the same on a laptop, in a worktree and on CI.
-    const key = `${file}: error ${code}: ${message}`.replaceAll(
-      `${repoRoot}/`,
-      "",
-    );
+    // the same on a laptop, in a worktree and on CI. tsc writes that path with forward
+    // slashes whatever the platform, so the prefix is compared in that form too.
+    const checkout = `${repoRoot.split(sep).join("/")}/`;
+    const key = `${file}: error ${code}: ${message}`.replaceAll(checkout, "");
     errors.push({ key, line: Number(line) });
   }
   return errors.sort((a, b) =>

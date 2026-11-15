@@ -351,40 +351,60 @@ describe("the provenance bundle on a rerun", () => {
 });
 
 describe("the release workflow", () => {
-  const steps = (
+  type WorkflowStep = {
+    name?: string;
+    run?: string;
+    env?: Record<string, string>;
+  };
+  const jobs = (
     Bun.YAML.parse(
       readFileSync(
         join(import.meta.dir, "../.github/workflows/publish-release.yml"),
         "utf8",
       ),
     ) as {
-      jobs: Record<
-        string,
-        {
-          steps: {
-            name?: string;
-            run?: string;
-            env?: Record<string, string>;
-          }[];
-        }
-      >;
+      jobs: Record<string, { steps: WorkflowStep[] }>;
     }
-  ).jobs["github-release"]!.steps;
-  const index = (name: string) => steps.findIndex((step) => step.name === name);
+  ).jobs;
+  // The bytes are produced in one job and published in another, so each is read from the job it is
+  // in: a step's name says nothing about which job it belongs to.
+  const assetSteps = jobs["release-assets"]!.steps;
+  const publishSteps = jobs["github-release"]!.steps;
+  const index = (steps: WorkflowStep[], name: string) =>
+    steps.findIndex((step) => step.name === name);
 
   test("fetches what was published before it writes, attests and compares anything", () => {
-    const fetch = index("Fetch what an earlier attempt already published");
-    expect(fetch).toBeGreaterThan(index("Package this release's chart"));
-    expect(fetch).toBeLessThan(
-      index("Archive exact source and write release manifest"),
+    const fetch = index(
+      assetSteps,
+      "Fetch what an earlier attempt already published",
     );
-    expect(steps[fetch]!.run).toContain(
+    expect(fetch).toBeGreaterThan(
+      index(assetSteps, "Package this release's chart"),
+    );
+    expect(fetch).toBeLessThan(
+      index(assetSteps, "Archive exact source and write release manifest"),
+    );
+    expect(assetSteps[fetch]!.run).toContain(
       'echo "OPENBOT_PUBLISHED_ASSETS=$published" >> "$GITHUB_ENV"',
     );
-    expect(steps[index("Save portable provenance bundle")]!.run).toContain(
+    expect(
+      assetSteps[index(assetSteps, "Save portable provenance bundle")]!.run,
+    ).toContain(
       "bun scripts/release-manifest.ts --adopt-provenance release-assets/release-provenance.sigstore.json",
     );
-    const publish = steps[index("Tag and publish")]!.run!;
+  });
+
+  test("fetches what was published before it compares anything against it", () => {
+    const fetch = index(
+      publishSteps,
+      "Fetch what an earlier attempt already published",
+    );
+    expect(fetch).toBeGreaterThan(-1);
+    expect(fetch).toBeLessThan(index(publishSteps, "Tag and publish"));
+    expect(publishSteps[fetch]!.run).toContain(
+      'echo "OPENBOT_PUBLISHED_ASSETS=$published" >> "$GITHUB_ENV"',
+    );
+    const publish = publishSteps[index(publishSteps, "Tag and publish")]!.run!;
     expect(publish).toContain('elif ! cmp -s "$artifact" "$published"; then');
     expect(publish).toContain(
       'gh release upload "$VERSION" "$artifact" --clobber',

@@ -6,6 +6,8 @@
  *   a commit main's CI passed, and nothing is built or tagged unless one or the other passed;
  * - the signing runs are started as soon as the release they attach to exists, not after a desktop
  *   build of the publish workflow's own;
+ * - the release's bytes are produced in a job that cannot write to the repository, and the release
+ *   is created from them only once they are produced;
  * - a stable release builds no installers of its own, since the signing runs' builds are the only
  *   ones it ever carries; a candidate or beta still gets its ad-hoc and unsigned ones, beside the
  *   release rather than before it.
@@ -104,22 +106,54 @@ test("the images are built only after the full checks passed, or after the gate 
   );
 });
 
-test("the release is created right after the images, and the signing runs are started from it", () => {
-  const release = job("github-release");
-  // Not after a desktop build: the signing runs need only the release, and for a candidate its
-  // container-images.json, which this job attaches.
-  // And after the list of the images the Desktop app downloads, which it attaches with
-  // container-images.json, so downloads sync always finds both on the release.
-  expect(needs("github-release")).toEqual([
+test("the release's bytes are produced without write access, and the release is created from them", () => {
+  const assets = job("release-assets");
+  // Everything that runs repository code runs here, where the token cannot write to the repository,
+  // so a compromised script cannot tag, publish or attest anything by itself.
+  expect(assets.permissions).toEqual({
+    contents: "read",
+    "id-token": "write",
+    attestations: "write",
+  });
+  expect(needs("release-assets")).toEqual([
     "metadata",
     "verify",
     "images",
     "image-list",
   ]);
-  expect(condition("github-release")).toBe(
+  expect(condition("release-assets")).toBe(
     "!cancelled() && needs.metadata.outputs.is_release == 'true' && " +
       "needs.verify.result == 'success' && needs.images.result == 'success' && " +
       "needs.image-list.result == 'success'",
+  );
+  // And the finished bytes leave this job only as an artifact, which the job that publishes them
+  // downloads. Nothing here reaches the repository.
+  const uploads = (assets.steps ?? []).filter((step) =>
+    step.uses?.startsWith("actions/upload-artifact@"),
+  );
+  expect(uploads).toHaveLength(1);
+  expect(uploads[0]?.with?.path).toContain("release-assets/");
+});
+
+test("the release is created after the bytes, and the signing runs are started from it", () => {
+  const release = job("github-release");
+  // Not after a desktop build: the signing runs need only the release, and for a candidate its
+  // container-images.json, which this job attaches.
+  // And after the list of the images the Desktop app downloads, which it attaches with
+  // container-images.json, so downloads sync always finds both on the release.
+  // And after the bytes themselves: the release exists only once they were produced.
+  expect(needs("github-release")).toEqual([
+    "metadata",
+    "verify",
+    "images",
+    "image-list",
+    "release-assets",
+  ]);
+  expect(condition("github-release")).toBe(
+    "!cancelled() && needs.metadata.outputs.is_release == 'true' && " +
+      "needs.verify.result == 'success' && needs.images.result == 'success' && " +
+      "needs.image-list.result == 'success' && " +
+      "needs.release-assets.result == 'success'",
   );
   expect(needs("image-list")).toEqual(["metadata", "verify", "images"]);
   const names = (release.steps ?? []).map((step) => step.name);

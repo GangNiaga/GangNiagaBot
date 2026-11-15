@@ -1881,12 +1881,15 @@ describe.each(SCHEME_KINDS)("a %s scheme", (kind) => {
   }
 });
 
-describe.each(BROKERED_PROBE_OUTCOMES)("a probe that %s", (outcome) => {
-  for (const consumer of PROBE_CONSUMERS) {
-    const cell = consumer.cells[outcome];
-    test(`${consumer.name} ${cell.decides}`, cell.assert);
-  }
-});
+describe.each(BROKERED_PROBE_OUTCOMES)(
+  "a probe that %s",
+  (outcome: BrokeredProbe["outcome"]) => {
+    for (const consumer of PROBE_CONSUMERS) {
+      const cell = consumer.cells[outcome];
+      test(`${consumer.name} ${cell.decides}`, cell.assert);
+    }
+  },
+);
 
 describe("scheme classifier coverage", () => {
   /**

@@ -24,6 +24,10 @@ const scan = builtInTools(repoRoot);
  * file can check its words, or added here with the reason it needs none.
  */
 const DECIDED_AT_RUN_TIME: Record<string, string> = {
+  "server/src/app.ts: tool.toolName":
+    "A granted integration's tool, listed in the tool catalogue. It reaches the model as mcp__<app>__<tool>, whose words readToolName gives it.",
+  "server/src/app.ts: definition.name":
+    "A headless computer tool, listed in the tool catalogue. Each one is registered, and checked, where it is made.",
   "server/src/plugins/tools.ts: tool.toolName":
     "An app's tool, offered as mcp__<app>__<tool>, which readToolName names from the app and the action.",
   "server/src/copilot.ts: tool.name":

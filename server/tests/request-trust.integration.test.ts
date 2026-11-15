@@ -776,7 +776,13 @@ describe.skipIf(!lanIsPrivate)("another machine on the network", () => {
   });
 
   test("is the administrator of an OpenBot in a container, where every caller comes through the engine", async () => {
-    const contained = await boot({ OPENBOT_IN_CONTAINER: "true" });
+    // The published development password is refused in a container that is not proven local-only,
+    // so this deployment carries its own: the secret is what the refusal is about, not the network.
+    const contained = await boot({
+      OPENBOT_IN_CONTAINER: "true",
+      DATABASE_URL:
+        "postgres://openbot:request-trust-container-password@localhost:5432/openbot",
+    });
     const posted = await overTheNetwork({
       port: contained.port,
       method: "POST",
