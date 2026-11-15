@@ -97,7 +97,10 @@ beforeAll(async () => {
   // As the chart writes it for a bundled Intelligence: in a container, single-user, the gateway
   // carried by OpenBot, and no public URL anywhere.
   const config = loadConfig({
-    DATABASE_URL: "postgres://openbot:openbot@127.0.0.1:5432/openbot",
+    // A deployment in a container is refused the published development password, so this one
+    // carries its own; the database it is given is the test database, not this string.
+    DATABASE_URL:
+      "postgres://openbot:recorder-grant-container-password@127.0.0.1:5432/openbot",
     KEY_ENCRYPTION_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
     INTELLIGENCE_API_URL: `http://127.0.0.1:${intelligencePort}`,
     INTELLIGENCE_GATEWAY_WS_URL: `ws://127.0.0.1:${intelligencePort}`,
